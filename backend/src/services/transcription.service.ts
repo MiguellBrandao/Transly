@@ -5,40 +5,7 @@ import { Worker } from "worker_threads";
 import { supabaseAdmin } from "../config/supabase";
 import { io } from "../index";
 
-// Cache the model to avoid reloading
-let transcriber: any = null;
-
 const WHISPER_MODEL = process.env.WHISPER_MODEL || "tiny";
-
-const getModelName = (): string => {
-  const modelMap: { [key: string]: string } = {
-    tiny: "Xenova/whisper-tiny", // ~150MB - Fast, less accurate
-    base: "Xenova/whisper-base", // ~500MB - Balanced
-    small: "Xenova/whisper-small", // ~1GB - Slow, most accurate
-  };
-  return modelMap[WHISPER_MODEL] || modelMap["tiny"];
-};
-
-const getTranscriber = async () => {
-  if (WHISPER_MODEL === "mock") {
-    console.log("⚠️ Using MOCK mode - no AI transcription");
-    return null;
-  }
-
-  if (!transcriber) {
-    const modelName = getModelName();
-    console.log(
-      `🤖 Loading Whisper model: ${WHISPER_MODEL.toUpperCase()} (${modelName})`
-    );
-    console.log("   This may take a few minutes on first run...");
-
-    transcriber = await pipeline("automatic-speech-recognition", modelName, {
-      quantized: false,
-    });
-    console.log("✅ Whisper model loaded successfully!");
-  }
-  return transcriber;
-};
 
 export const extractAudio = async (
   videoPath: string,
@@ -60,30 +27,35 @@ export const extractAudio = async (
 // Transcribe audio using Worker Thread (non-blocking)
 export const transcribeAudio = async (audioPath: string): Promise<any> => {
   return new Promise((resolve, reject) => {
-    console.log(`🔧 Starting transcription in worker thread (model: ${WHISPER_MODEL.toUpperCase()})...`);
-    
-    const worker = new Worker(path.join(__dirname, '../workers/transcription.worker.js'), {
-      workerData: { audioPath },
-      env: process.env,
-    });
+    console.log(
+      `🔧 Starting transcription in worker thread (model: ${WHISPER_MODEL.toUpperCase()})...`
+    );
 
-    worker.on('message', (message) => {
+    const worker = new Worker(
+      path.join(__dirname, "../workers/transcription.worker.js"),
+      {
+        workerData: { audioPath },
+        env: process.env,
+      }
+    );
+
+    worker.on("message", (message) => {
       if (message.success) {
-        console.log('✅ Worker completed successfully');
+        console.log("✅ Worker completed successfully");
         resolve(message.data);
       } else {
-        console.error('❌ Worker failed:', message.error);
+        console.error("❌ Worker failed:", message.error);
         reject(new Error(message.error));
       }
     });
 
-    worker.on('error', (error) => {
-      console.error('❌ Worker error:', error);
+    worker.on("error", (error) => {
+      console.error("❌ Worker error:", error);
       // Return mock data on error
       resolve(getMockTranscription());
     });
 
-    worker.on('exit', (code) => {
+    worker.on("exit", (code) => {
       if (code !== 0) {
         console.error(`❌ Worker stopped with exit code ${code}`);
         resolve(getMockTranscription());
@@ -217,36 +189,4 @@ export const processVideoTranscription = async (
       .update({ status: "failed" })
       .eq("id", videoId);
   }
-};
-
-const groupWordsIntoSentences = (words: any[]): any[] => {
-  if (!words || words.length === 0) return [];
-
-  const sentences: any[] = [];
-  let currentSentence: any[] = [];
-  let sentenceStart = 0;
-
-  words.forEach((word, index) => {
-    currentSentence.push(word);
-
-    // End sentence on punctuation or every ~15 words
-    const endsWithPunctuation = /[.!?;]$/.test(word.word);
-    const isLongEnough = currentSentence.length >= 15;
-
-    if (endsWithPunctuation || isLongEnough || index === words.length - 1) {
-      sentences.push({
-        text: currentSentence.map((w) => w.word).join(" "),
-        start: sentenceStart,
-        end: word.end,
-        words: [...currentSentence],
-      });
-
-      currentSentence = [];
-      if (index < words.length - 1) {
-        sentenceStart = words[index + 1].start;
-      }
-    }
-  });
-
-  return sentences;
 };
