@@ -1,24 +1,25 @@
-<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Icon -->
-  <g>
-    <!-- Circle background -->
-    <circle cx="30" cy="30" r="28" fill="#0EA5E9"/>
-    
-    <!-- Play button -->
-    <path d="M22 16L44 30L22 44V16Z" fill="white"/>
-    
-    <!-- Waveform/Transcription -->
-    <rect x="18" y="48" width="24" height="2" rx="1" fill="white" opacity="0.9"/>
-  </g>
-  
-  <!-- Text "Transly" -->
-  <text x="70" y="40" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="currentColor">
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Icon -->
+    <g>
+        <!-- Circle background -->
+        <circle cx="30" cy="30" r="28" fill="#0EA5E9"/>
+
+        <!-- Play button -->
+        <path d="M22 16L44 30L22 44V16Z" fill="white"/>
+
+        <!-- Waveform/Transcription -->
+        <rect x="18" y="48" width="24" height="2" rx="1" fill="white" opacity="0.9"/>
+    </g>
+
+    <!-- Text "Transly" -->
+    <text x="70" y="40" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="currentColor">
     Transly
-  </text>
-  
-  <!-- Tagline -->
-  <text x="70" y="52" font-family="Arial, sans-serif" font-size="10" fill="currentColor" opacity="0.6">
+    </text>
+
+    <!-- Tagline -->
+    <text x="70" y="52" font-family="Arial, sans-serif" font-size="10" fill="currentColor" opacity="0.6">
     AI Video Transcription
-  </text>
+    </text>
 </svg>
 

@@ -1,9 +1,8 @@
 import ffmpeg from "fluent-ffmpeg";
 import path from "path";
 import fs from "fs";
+import { Worker } from "worker_threads";
 import { supabaseAdmin } from "../config/supabase";
-import { pipeline } from "@xenova/transformers";
-import { WaveFile } from "wavefile";
 import { io } from "../index";
 
 // Cache the model to avoid reloading
@@ -58,166 +57,39 @@ export const extractAudio = async (
   });
 };
 
-// Helper function to read WAV file and convert to Float32Array
-const readAudioFile = (audioPath: string): Float32Array => {
-  const buffer = fs.readFileSync(audioPath);
-  const wav = new WaveFile(buffer);
-
-  // Convert to 16-bit PCM if not already
-  wav.toBitDepth("16");
-  wav.toSampleRate(16000);
-
-  // Get samples
-  let samples = wav.getSamples(false, Float32Array);
-
-  // If stereo, convert to mono by averaging channels
-  if (Array.isArray(samples)) {
-    const mono = new Float32Array(samples[0].length);
-    for (let i = 0; i < samples[0].length; i++) {
-      mono[i] =
-        samples.reduce((sum, channel) => sum + channel[i], 0) / samples.length;
-    }
-    samples = mono;
-  }
-
-  // Normalize to [-1, 1] range (critical for Whisper)
-  const typedSamples = samples as Float32Array;
-
-  // Find max value without spread operator (avoid stack overflow)
-  let maxVal = 0;
-  for (let i = 0; i < typedSamples.length; i++) {
-    const absVal = Math.abs(typedSamples[i]);
-    if (absVal > maxVal) maxVal = absVal;
-  }
-
-  if (maxVal > 1) {
-    const normalized = new Float32Array(typedSamples.length);
-    for (let i = 0; i < typedSamples.length; i++) {
-      normalized[i] = typedSamples[i] / maxVal;
-    }
-    return normalized;
-  }
-
-  return typedSamples;
-};
-
+// Transcribe audio using Worker Thread (non-blocking)
 export const transcribeAudio = async (audioPath: string): Promise<any> => {
-  // If using mock mode, return mock data immediately
-  if (WHISPER_MODEL === "mock") {
-    console.log(
-      "🎭 MOCK mode: Returning sample transcription (no AI processing)"
-    );
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate processing time
-    return getMockTranscription();
-  }
-
-  try {
-    console.log("📖 Reading audio file...");
-    const audioData = readAudioFile(audioPath);
-    const durationInSeconds = audioData.length / 16000;
-    console.log(
-      `✅ Audio loaded: ${
-        audioData.length
-      } samples (${durationInSeconds.toFixed(1)}s duration)`
-    );
-
-    // Find min/max without spread operator
-    let min = audioData[0],
-      max = audioData[0];
-    for (let i = 1; i < audioData.length; i++) {
-      if (audioData[i] < min) min = audioData[i];
-      if (audioData[i] > max) max = audioData[i];
-    }
-    console.log(`   Audio range: [${min.toFixed(3)}, ${max.toFixed(3)}]`);
-
-    console.log(
-      `🎤 Starting Whisper transcription with model: ${WHISPER_MODEL.toUpperCase()}...`
-    );
-    const model = await getTranscriber();
-
-    // Transcribe with better options
-    const result = await model(audioData, {
-      return_timestamps: "word",
-      chunk_length_s: 30,
-      stride_length_s: 5,
-      language: "portuguese", // Try Portuguese first, Whisper will auto-detect if wrong
-      task: "transcribe",
+  return new Promise((resolve, reject) => {
+    console.log(`🔧 Starting transcription in worker thread (model: ${WHISPER_MODEL.toUpperCase()})...`);
+    
+    const worker = new Worker(path.join(__dirname, '../workers/transcription.worker.js'), {
+      workerData: { audioPath },
+      env: process.env,
     });
 
-    console.log("📝 Raw transcription result:");
-    console.log(`   Text: "${result.text || "(empty)"}"`);
-    console.log(`   Chunks: ${result.chunks?.length || 0}`);
-
-    // Check if we got valid results
-    if (!result || !result.text || result.text.trim() === "") {
-      console.warn("⚠️ Whisper returned empty - audio might have no speech");
-      console.log("   Trying again without language constraint...");
-
-      // Try again without language constraint
-      const result2 = await model(audioData, {
-        return_timestamps: "word",
-        chunk_length_s: 30,
-        stride_length_s: 5,
-      });
-
-      if (result2?.text && result2.text.trim() !== "") {
-        console.log(
-          `✅ Success on retry: "${result2.text.substring(0, 50)}..."`
-        );
-        return processTranscriptionResult(result2, audioData.length);
+    worker.on('message', (message) => {
+      if (message.success) {
+        console.log('✅ Worker completed successfully');
+        resolve(message.data);
+      } else {
+        console.error('❌ Worker failed:', message.error);
+        reject(new Error(message.error));
       }
+    });
 
-      console.warn("❌ Still empty. Using mock data for demonstration.");
-      return getMockTranscription();
-    }
+    worker.on('error', (error) => {
+      console.error('❌ Worker error:', error);
+      // Return mock data on error
+      resolve(getMockTranscription());
+    });
 
-    return processTranscriptionResult(result, audioData.length);
-  } catch (error) {
-    console.error("❌ Transcription error:", error);
-    console.log("Using mock data as fallback...");
-    return getMockTranscription();
-  }
-};
-
-const processTranscriptionResult = (result: any, audioLength: number) => {
-  console.log(`✅ Transcribed: "${result.text.substring(0, 100)}..."`);
-
-  // Transform result to our format
-  let words: any[] = [];
-
-  if (result.chunks && result.chunks.length > 0) {
-    words = result.chunks
-      .map((chunk: any) => ({
-        word: chunk.text.trim(),
-        start: chunk.timestamp[0] || 0,
-        end: chunk.timestamp[1] || chunk.timestamp[0] || 0,
-        confidence: 1.0,
-      }))
-      .filter((w: any) => w.word.length > 0);
-  }
-
-  // If no word timestamps, generate from text
-  if (words.length === 0 && result.text) {
-    console.log("⚠️ No word-level timestamps, generating estimates...");
-    const textWords = result.text.split(/\s+/).filter((w) => w.length > 0);
-    const duration = audioLength / 16000;
-    const timePerWord = duration / textWords.length;
-
-    words = textWords.map((word: string, idx: number) => ({
-      word: word,
-      start: idx * timePerWord,
-      end: (idx + 1) * timePerWord,
-      confidence: 0.8,
-    }));
-  }
-
-  console.log(`✅ Final: ${result.text.length} chars, ${words.length} words`);
-
-  return {
-    text: result.text.trim(),
-    words,
-    language: result.language || "auto",
-  };
+    worker.on('exit', (code) => {
+      if (code !== 0) {
+        console.error(`❌ Worker stopped with exit code ${code}`);
+        resolve(getMockTranscription());
+      }
+    });
+  });
 };
 
 const getMockTranscription = () => {
@@ -235,6 +107,37 @@ const getMockTranscription = () => {
     words: mockWords,
     language: "en",
   };
+};
+
+const groupWordsIntoSentences = (words: any[]): any[] => {
+  if (!words || words.length === 0) return [];
+
+  const sentences: any[] = [];
+  let currentSentence: any[] = [];
+  let sentenceStart = 0;
+
+  words.forEach((word, index) => {
+    currentSentence.push(word);
+
+    const endsWithPunctuation = /[.!?;]$/.test(word.word);
+    const isLongEnough = currentSentence.length >= 15;
+
+    if (endsWithPunctuation || isLongEnough || index === words.length - 1) {
+      sentences.push({
+        text: currentSentence.map((w) => w.word).join(" "),
+        start: sentenceStart,
+        end: word.end,
+        words: [...currentSentence],
+      });
+
+      currentSentence = [];
+      if (index < words.length - 1) {
+        sentenceStart = words[index + 1].start;
+      }
+    }
+  });
+
+  return sentences;
 };
 
 export const processVideoTranscription = async (
@@ -270,7 +173,7 @@ export const processVideoTranscription = async (
 
     await extractAudio(videoPath, audioPath);
 
-    // Transcribe
+    // Transcribe using worker thread (non-blocking!)
     const transcriptionResult = await transcribeAudio(audioPath);
 
     // Group words into sentences
