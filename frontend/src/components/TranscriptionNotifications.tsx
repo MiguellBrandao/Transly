@@ -86,8 +86,8 @@ const TranscriptionNotifications = () => {
                   : 'text-green-800 dark:text-green-300'
               }`}>
                 {notification.status === 'processing'
-                  ? t('status.processing')
-                  : '✓ ' + t('status.completed')}
+                  ? t('notifications.processing')
+                  : t('notifications.completed')}
               </p>
               <p className={`text-xs ${
                 notification.status === 'processing'

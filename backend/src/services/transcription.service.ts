@@ -223,12 +223,12 @@ export const processVideoTranscription = async (
       .from("videos")
       .update({ status: "processing" })
       .eq("id", videoId);
-    
+
     // Emit WebSocket event that processing started
-    io.emit('transcription:started', {
+    io.emit("transcription:started", {
       videoId,
       userId,
-      status: 'processing',
+      status: "processing",
     });
 
     // Get video directory
@@ -273,11 +273,12 @@ export const processVideoTranscription = async (
     }
 
     console.log(`✅ Transcription completed for video ${videoId}`);
-
+    
     // Emit WebSocket event to notify clients
     io.emit("transcription:completed", {
       videoId,
       userId,
+      status: 'completed',
     });
   } catch (error) {
     console.error("Process video transcription error:", error);

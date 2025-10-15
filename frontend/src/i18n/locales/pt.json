@@ -100,6 +100,11 @@
     "processing": "A Processar",
     "completed": "Concluído",
     "failed": "Falhado"
+  },
+  "notifications": {
+    "processing": "A transcrever vídeo...",
+    "completed": "Transcrição concluída!",
+    "inQueue": "vídeo(s) na fila"
   }
 }
 
