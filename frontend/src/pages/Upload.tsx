@@ -69,7 +69,7 @@ const Upload = () => {
       if (fileSizeMB > compressionThreshold) {
         setCompressing(true);
         console.log(`🗜️ Video is ${fileSizeMB.toFixed(1)}MB, compressing before upload...`);
-
+        
         try {
           fileToUpload = await videoCompressionService.compressVideo(
             file,
@@ -80,9 +80,12 @@ const Upload = () => {
           setCompressedSize(fileToUpload.size);
           console.log(`✅ Compressed from ${fileSizeMB.toFixed(1)}MB to ${(fileToUpload.size / (1024 * 1024)).toFixed(1)}MB`);
         } catch (compressionError) {
-          console.error('⚠️ Compression failed, uploading original file:', compressionError);
+          console.warn('⚠️ Compression failed, uploading original file:', compressionError);
+          console.warn('💡 This is normal if FFmpeg.wasm cannot load in your browser.');
+          console.warn('💡 The video will be uploaded without compression.');
           // Continue with original file if compression fails
           fileToUpload = file;
+          setCompressedSize(0); // Reset compressed size
         } finally {
           setCompressing(false);
         }

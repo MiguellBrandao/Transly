@@ -20,21 +20,54 @@ class VideoCompressionService {
     this.ffmpeg = new FFmpeg();
 
     try {
-      const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+      // Try multiple CDN sources for better reliability
+      const cdnOptions = [
+        {
+          name: "unpkg.com v0.12.6",
+          baseURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
+        },
+        {
+          name: "unpkg.com v0.12.4",
+          baseURL: "https://unpkg.com/@ffmpeg/core@0.12.4/dist/umd",
+        },
+        {
+          name: "jsdelivr v0.12.6",
+          baseURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd",
+        },
+      ];
 
-      await this.ffmpeg.load({
-        coreURL: await toBlobURL(
-          `${baseURL}/ffmpeg-core.js`,
-          "text/javascript"
-        ),
-        wasmURL: await toBlobURL(
-          `${baseURL}/ffmpeg-core.wasm`,
-          "application/wasm"
-        ),
-      });
+      let loadError: Error | null = null;
 
-      this.isLoaded = true;
-      console.log("✅ FFmpeg loaded successfully");
+      for (const cdn of cdnOptions) {
+        try {
+          console.log(`🔄 Trying to load FFmpeg from ${cdn.name}...`);
+          
+          const coreURL = await toBlobURL(
+            `${cdn.baseURL}/ffmpeg-core.js`,
+            "text/javascript"
+          );
+          const wasmURL = await toBlobURL(
+            `${cdn.baseURL}/ffmpeg-core.wasm`,
+            "application/wasm"
+          );
+
+          await this.ffmpeg.load({
+            coreURL,
+            wasmURL,
+          });
+
+          this.isLoaded = true;
+          console.log(`✅ FFmpeg loaded successfully from ${cdn.name}`);
+          return;
+        } catch (error) {
+          console.warn(`⚠️ Failed to load from ${cdn.name}:`, error);
+          loadError = error as Error;
+          // Continue to next CDN
+        }
+      }
+
+      // If all CDNs failed
+      throw loadError || new Error("Failed to load FFmpeg from all CDN sources");
     } catch (error) {
       console.error("❌ Failed to load FFmpeg:", error);
       throw error;
