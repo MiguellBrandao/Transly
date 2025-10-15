@@ -39,6 +39,8 @@ const FileManager = () => {
   const [loading, setLoading] = useState(true);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [editingFolder, setEditingFolder] = useState<string | null>(null);
+  const [editFolderName, setEditFolderName] = useState('');
 
   useEffect(() => {
     loadData();
@@ -94,6 +96,27 @@ const FileManager = () => {
       loadData();
     } catch (error) {
       console.error('Failed to delete folder:', error);
+    }
+  };
+
+  const updateFolder = async (id: string, name: string) => {
+    if (!name.trim()) return;
+
+    try {
+      await api.put(`/api/folders/${id}`, { name });
+      setEditingFolder(null);
+      loadData();
+    } catch (error) {
+      console.error('Failed to update folder:', error);
+    }
+  };
+
+  const moveVideoToRoot = async (videoId: string) => {
+    try {
+      await api.put(`/api/videos/${videoId}`, { folder_id: null });
+      loadData();
+    } catch (error) {
+      console.error('Failed to move video:', error);
     }
   };
 
@@ -161,6 +184,38 @@ const FileManager = () => {
             />
           </div>
         </div>
+
+        {/* Breadcrumbs & Drop Zone for Root */}
+        {currentFolder && (
+          <div className="mb-4 flex items-center gap-2">
+            <button
+              onClick={() => setCurrentFolder(null)}
+              className="px-4 py-2 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              ← {t('common.back')} (Root)
+            </button>
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add('bg-primary-100', 'dark:bg-primary-900/30');
+              }}
+              onDragLeave={(e) => {
+                e.currentTarget.classList.remove('bg-primary-100', 'dark:bg-primary-900/30');
+              }}
+              onDrop={async (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('bg-primary-100', 'dark:bg-primary-900/30');
+                const videoId = e.dataTransfer.getData('videoId');
+                if (videoId) {
+                  moveVideoToRoot(videoId);
+                }
+              }}
+              className="flex-1 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center text-sm text-gray-600 dark:text-gray-400 hover:border-primary-400 transition-colors"
+            >
+              📂 Drop here to move to root folder
+            </div>
+          </div>
+        )}
 
         {/* New Folder Modal */}
         {showNewFolder && (
@@ -239,23 +294,49 @@ const FileManager = () => {
                   }}
                   className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group"
                 >
-                  <button
-                    onClick={() => setCurrentFolder(folder.id)}
-                    className="flex items-center flex-1"
-                  >
-                    <Folder className="w-10 h-10 text-yellow-500 mr-4" />
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                        {folder.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDistanceToNow(new Date(folder.created_at), {
-                          addSuffix: true,
-                          locale,
-                        })}
-                      </p>
+                  <div className="flex items-center flex-1">
+                    <Folder className="w-10 h-10 text-yellow-500 mr-4 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      {editingFolder === folder.id ? (
+                        <input
+                          type="text"
+                          value={editFolderName}
+                          onChange={(e) => setEditFolderName(e.target.value)}
+                          onBlur={() => {
+                            updateFolder(folder.id, editFolderName);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              updateFolder(folder.id, editFolderName);
+                            } else if (e.key === 'Escape') {
+                              setEditingFolder(null);
+                            }
+                          }}
+                          className="w-full px-2 py-1 border border-primary-500 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          autoFocus
+                        />
+                      ) : (
+                        <button
+                          onClick={() => setCurrentFolder(folder.id)}
+                          onDoubleClick={() => {
+                            setEditingFolder(folder.id);
+                            setEditFolderName(folder.name);
+                          }}
+                          className="text-left w-full"
+                        >
+                          <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {folder.name}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatDistanceToNow(new Date(folder.created_at), {
+                              addSuffix: true,
+                              locale,
+                            })}
+                          </p>
+                        </button>
+                      )}
                     </div>
-                  </button>
+                  </div>
                   <button
                     onClick={() => deleteFolder(folder.id)}
                     className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
