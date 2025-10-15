@@ -129,4 +129,3 @@ A primeira vez demora mais (download do modelo Whisper ~300MB). Tenha paciência
 ---
 
 **Problemas?** Abra uma [issue no GitHub](https://github.com/seu-usuario/transly/issues)
-
