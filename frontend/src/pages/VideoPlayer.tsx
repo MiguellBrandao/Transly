@@ -60,17 +60,17 @@ const VideoPlayer = () => {
 
   useEffect(() => {
     loadData();
-    
+
     // Connect to WebSocket for real-time updates
     const socket = getSocket();
-    
+
     socket.on('transcription:completed', (data: any) => {
       if (data.videoId === id) {
         console.log('✅ Transcription completed for this video, refreshing...');
         loadData();
       }
     });
-    
+
     return () => {
       socket.off('transcription:completed');
     };

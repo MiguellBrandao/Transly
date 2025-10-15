@@ -45,15 +45,15 @@ const FileManager = () => {
 
   useEffect(() => {
     loadData();
-    
+
     // Connect to WebSocket for real-time updates
     const socket = getSocket();
-    
+
     socket.on('transcription:completed', () => {
       console.log('✅ Transcription completed, refreshing files...');
       loadData();
     });
-    
+
     return () => {
       socket.off('transcription:completed');
     };

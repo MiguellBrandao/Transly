@@ -23,15 +23,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadVideos();
-    
+
     // Connect to WebSocket for real-time updates
     const socket = getSocket();
-    
+
     socket.on('transcription:completed', () => {
       console.log('✅ Transcription completed, refreshing...');
       loadVideos();
     });
-    
+
     return () => {
       socket.off('transcription:completed');
     };

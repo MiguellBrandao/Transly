@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { supabaseAdmin } from '../config/supabase';
 import { uploadVideoToStorage, deleteVideoFromStorage } from '../services/storage.service';
-import { processVideoTranscription } from '../services/transcription.service';
+import { transcriptionQueue } from '../services/queue.service';
 
 const router = Router();
 
@@ -127,14 +127,17 @@ router.post('/upload', authMiddleware, upload.single('video'), async (req: AuthR
       .update({ storage_url: storageUrl })
       .eq('id', video.id);
 
-    // Start transcription process in background
-    processVideoTranscription(video.id, file.path, userId!).catch(err => {
-      console.error('Transcription process error:', err);
+    // Add to transcription queue
+    transcriptionQueue.add({
+      videoId: video.id,
+      videoPath: file.path,
+      userId: userId!,
     });
 
     res.json({
-      message: 'Video uploaded successfully. Transcription started.',
+      message: 'Video uploaded successfully. Transcription queued.',
       video,
+      queuePosition: transcriptionQueue.getQueueSize(),
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

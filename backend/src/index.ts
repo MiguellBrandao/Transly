@@ -19,9 +19,10 @@ const app: Application = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? false : "http://localhost:3000",
-    methods: ["GET", "POST"]
-  }
+    origin:
+      process.env.NODE_ENV === "production" ? false : "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
 });
 
 const PORT = process.env.PORT || 3001;
@@ -89,10 +90,10 @@ app.use((err: any, _req: Request, res: Response, _next: any) => {
 });
 
 // WebSocket connection handling
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
-  
-  socket.on('disconnect', () => {
+
+  socket.on("disconnect", () => {
     console.log(`🔌 Client disconnected: ${socket.id}`);
   });
 });
