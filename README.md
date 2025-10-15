@@ -444,12 +444,6 @@ MIT License - see [LICENSE](LICENSE) file for details
 - [Supabase](https://supabase.com) for backend infrastructure
 - [Tailwind CSS](https://tailwindcss.com) for styling
 
-## 📞 Support
-
-- 🐛 [Report a bug](https://github.com/yourusername/transly/issues)
-- 💡 [Request a feature](https://github.com/yourusername/transly/issues)
-- 📧 Email: support@transly.app
-
 ---
 
 **Made with ❤️ for better video accessibility**

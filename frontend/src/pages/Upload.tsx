@@ -69,7 +69,7 @@ const Upload = () => {
       if (fileSizeMB > compressionThreshold) {
         setCompressing(true);
         console.log(`🗜️ Video is ${fileSizeMB.toFixed(1)}MB, compressing before upload...`);
-        
+
         try {
           fileToUpload = await videoCompressionService.compressVideo(
             file,
@@ -238,10 +238,10 @@ const Upload = () => {
                 disabled={!file || uploading || compressing}
                 className="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {compressing 
+                {compressing
                   ? t('upload.compressing')
-                  : uploading 
-                    ? t('upload.uploading') 
+                  : uploading
+                    ? t('upload.uploading')
                     : t('upload.selectFile')}
               </button>
             </form>
