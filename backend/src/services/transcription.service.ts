@@ -9,20 +9,36 @@ import { io } from "../index";
 // Cache the model to avoid reloading
 let transcriber: any = null;
 
+const WHISPER_MODEL = process.env.WHISPER_MODEL || 'tiny';
+
+const getModelName = (): string => {
+  const modelMap: { [key: string]: string } = {
+    'tiny': 'Xenova/whisper-tiny',    // ~150MB - Fast, less accurate
+    'base': 'Xenova/whisper-base',    // ~500MB - Balanced
+    'small': 'Xenova/whisper-small',  // ~1GB - Slow, most accurate
+  };
+  return modelMap[WHISPER_MODEL] || modelMap['tiny'];
+};
+
 const getTranscriber = async () => {
+  if (WHISPER_MODEL === 'mock') {
+    console.log("⚠️ Using MOCK mode - no AI transcription");
+    return null;
+  }
+
   if (!transcriber) {
-    console.log(
-      "Loading Whisper model (this may take a few minutes on first run)..."
-    );
-    // Using whisper-small for better accuracy (good balance between speed and quality)
+    const modelName = getModelName();
+    console.log(`🤖 Loading Whisper model: ${WHISPER_MODEL.toUpperCase()} (${modelName})`);
+    console.log("   This may take a few minutes on first run...");
+    
     transcriber = await pipeline(
       "automatic-speech-recognition",
-      "Xenova/whisper-small",
+      modelName,
       {
         quantized: false,
       }
     );
-    console.log("Whisper model loaded successfully!");
+    console.log("✅ Whisper model loaded successfully!");
   }
   return transcriber;
 };
@@ -273,12 +289,12 @@ export const processVideoTranscription = async (
     }
 
     console.log(`✅ Transcription completed for video ${videoId}`);
-    
+
     // Emit WebSocket event to notify clients
     io.emit("transcription:completed", {
       videoId,
       userId,
-      status: 'completed',
+      status: "completed",
     });
   } catch (error) {
     console.error("Process video transcription error:", error);
