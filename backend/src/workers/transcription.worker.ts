@@ -1,27 +1,27 @@
-import { parentPort, workerData } from 'worker_threads';
-import ffmpeg from 'fluent-ffmpeg';
-import path from 'path';
-import fs from 'fs';
-import { pipeline } from '@xenova/transformers';
-import { WaveFile } from 'wavefile';
+import { parentPort, workerData } from "worker_threads";
+import ffmpeg from "fluent-ffmpeg";
+import path from "path";
+import fs from "fs";
+import { pipeline } from "@xenova/transformers";
+import { WaveFile } from "wavefile";
 
 // This runs in a separate thread!
-const WHISPER_MODEL = process.env.WHISPER_MODEL || 'tiny';
+const WHISPER_MODEL = process.env.WHISPER_MODEL || "tiny";
 
 const getModelName = (): string => {
   const modelMap: { [key: string]: string } = {
-    'tiny': 'Xenova/whisper-tiny',
-    'base': 'Xenova/whisper-base',
-    'small': 'Xenova/whisper-small',
+    tiny: "Xenova/whisper-tiny",
+    base: "Xenova/whisper-base",
+    small: "Xenova/whisper-small",
   };
-  return modelMap[WHISPER_MODEL] || modelMap['tiny'];
+  return modelMap[WHISPER_MODEL] || modelMap["tiny"];
 };
 
 const readAudioFile = (audioPath: string): Float32Array => {
   const buffer = fs.readFileSync(audioPath);
   const wav = new WaveFile(buffer);
 
-  wav.toBitDepth('16');
+  wav.toBitDepth("16");
   wav.toSampleRate(16000);
 
   let samples = wav.getSamples(false, Float32Array);
@@ -29,7 +29,8 @@ const readAudioFile = (audioPath: string): Float32Array => {
   if (Array.isArray(samples)) {
     const mono = new Float32Array(samples[0].length);
     for (let i = 0; i < samples[0].length; i++) {
-      mono[i] = samples.reduce((sum, channel) => sum + channel[i], 0) / samples.length;
+      mono[i] =
+        samples.reduce((sum, channel) => sum + channel[i], 0) / samples.length;
     }
     samples = mono;
   }
@@ -65,7 +66,7 @@ const getMockTranscription = () => {
   return {
     text: mockText,
     words: mockWords,
-    language: 'en',
+    language: "en",
   };
 };
 
@@ -73,7 +74,7 @@ const getMockTranscription = () => {
   try {
     const { audioPath } = workerData;
 
-    if (WHISPER_MODEL === 'mock') {
+    if (WHISPER_MODEL === "mock") {
       parentPort?.postMessage({
         success: true,
         data: getMockTranscription(),
@@ -84,30 +85,32 @@ const getMockTranscription = () => {
     console.log(`🔧 Worker: Reading audio file...`);
     const audioData = readAudioFile(audioPath);
 
-    console.log(`🔧 Worker: Loading Whisper model ${WHISPER_MODEL.toUpperCase()}...`);
+    console.log(
+      `🔧 Worker: Loading Whisper model ${WHISPER_MODEL.toUpperCase()}...`
+    );
     const transcriber = await pipeline(
-      'automatic-speech-recognition',
+      "automatic-speech-recognition",
       getModelName(),
       { quantized: false }
     );
 
     console.log(`🔧 Worker: Transcribing...`);
     const result = await transcriber(audioData, {
-      return_timestamps: 'word',
+      return_timestamps: "word",
       chunk_length_s: 30,
       stride_length_s: 5,
-      language: 'portuguese',
-      task: 'transcribe',
+      language: "portuguese",
+      task: "transcribe",
     });
 
-    if (!result || !result.text || result.text.trim() === '') {
+    if (!result || !result.text || result.text.trim() === "") {
       const result2 = await transcriber(audioData, {
-        return_timestamps: 'word',
+        return_timestamps: "word",
         chunk_length_s: 30,
         stride_length_s: 5,
       });
 
-      if (result2?.text && result2.text.trim() !== '') {
+      if (result2?.text && result2.text.trim() !== "") {
         parentPort?.postMessage({
           success: true,
           data: processResult(result2, audioData.length),
@@ -127,7 +130,7 @@ const getMockTranscription = () => {
       data: processResult(result, audioData.length),
     });
   } catch (error: any) {
-    console.error('🔧 Worker error:', error);
+    console.error("🔧 Worker error:", error);
     parentPort?.postMessage({
       success: false,
       error: error.message,
@@ -150,7 +153,9 @@ function processResult(result: any, audioLength: number) {
   }
 
   if (words.length === 0 && result.text) {
-    const textWords = result.text.split(/\s+/).filter((w: string) => w.length > 0);
+    const textWords = result.text
+      .split(/\s+/)
+      .filter((w: string) => w.length > 0);
     const duration = audioLength / 16000;
     const timePerWord = duration / textWords.length;
 
@@ -165,7 +170,6 @@ function processResult(result: any, audioLength: number) {
   return {
     text: result.text.trim(),
     words,
-    language: result.language || 'auto',
+    language: result.language || "auto",
   };
 }
-
