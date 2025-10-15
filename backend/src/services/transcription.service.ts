@@ -112,6 +112,37 @@ const groupWordsIntoSentences = (words: any[]): any[] => {
   return sentences;
 };
 
+const groupWordsIntoSentences = (words: any[]): any[] => {
+  if (!words || words.length === 0) return [];
+
+  const sentences: any[] = [];
+  let currentSentence: any[] = [];
+  let sentenceStart = 0;
+
+  words.forEach((word, index) => {
+    currentSentence.push(word);
+
+    const endsWithPunctuation = /[.!?;]$/.test(word.word);
+    const isLongEnough = currentSentence.length >= 15;
+
+    if (endsWithPunctuation || isLongEnough || index === words.length - 1) {
+      sentences.push({
+        text: currentSentence.map((w) => w.word).join(" "),
+        start: sentenceStart,
+        end: word.end,
+        words: [...currentSentence],
+      });
+
+      currentSentence = [];
+      if (index < words.length - 1) {
+        sentenceStart = words[index + 1].start;
+      }
+    }
+  });
+
+  return sentences;
+};
+
 export const processVideoTranscription = async (
   videoId: string,
   videoPath: string,
