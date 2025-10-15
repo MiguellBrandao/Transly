@@ -92,22 +92,39 @@ const VideoPlayer = () => {
 
   const exportTranscription = async (format: string) => {
     try {
+      const { supabase } = await import('../config/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        console.error('No access token available');
+        return;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/transcriptions/export/${id}/${format}`,
         {
           headers: {
-            Authorization: `Bearer ${(await import('../config/supabase')).supabase.auth.getSession().then(s => s.data.session?.access_token || '')}`,
+            'Authorization': `Bearer ${session.access_token}`,
           },
         }
       );
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `${video?.title}.${format}`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to export:', error);
+      alert('Failed to export transcription. Please try again.');
     }
   };
 

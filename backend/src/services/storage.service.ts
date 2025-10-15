@@ -16,21 +16,24 @@ if (STORAGE_TYPE === 'local' && !fs.existsSync(VIDEOS_DIR)) {
 export const uploadVideoToStorage = async (
   filePath: string,
   filename: string,
-  userId: string
+  userId: string,
+  videoId: string
 ): Promise<string> => {
   if (STORAGE_TYPE === 'local') {
-    // LOCAL STORAGE: Move file to videos directory
+    // LOCAL STORAGE: videos/[user-id]/[video-id]/video.mp4
     try {
-      const userDir = path.join(VIDEOS_DIR, userId);
-      if (!fs.existsSync(userDir)) {
-        fs.mkdirSync(userDir, { recursive: true });
+      const videoDir = path.join(VIDEOS_DIR, userId, videoId);
+      if (!fs.existsSync(videoDir)) {
+        fs.mkdirSync(videoDir, { recursive: true });
       }
 
-      const destinationPath = path.join(userDir, filename);
+      const ext = path.extname(filename);
+      const videoFilename = `video${ext}`;
+      const destinationPath = path.join(videoDir, videoFilename);
       fs.copyFileSync(filePath, destinationPath);
 
       // Return URL that will be served by Express
-      const publicUrl = `${BASE_URL}/videos/${userId}/${filename}`;
+      const publicUrl = `${BASE_URL}/videos/${userId}/${videoId}/${videoFilename}`;
       console.log(`📹 Video stored locally: ${destinationPath}`);
       return publicUrl;
     } catch (error: any) {
@@ -69,16 +72,16 @@ export const uploadVideoToStorage = async (
 };
 
 export const deleteVideoFromStorage = async (
-  filename: string,
+  videoId: string,
   userId: string
 ): Promise<void> => {
   if (STORAGE_TYPE === 'local') {
-    // LOCAL STORAGE: Delete file from videos directory
+    // LOCAL STORAGE: Delete entire video directory
     try {
-      const filePath = path.join(VIDEOS_DIR, userId, filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log(`🗑️ Deleted local video: ${filePath}`);
+      const videoDir = path.join(VIDEOS_DIR, userId, videoId);
+      if (fs.existsSync(videoDir)) {
+        fs.rmSync(videoDir, { recursive: true, force: true });
+        console.log(`🗑️ Deleted local video directory: ${videoDir}`);
       }
     } catch (error: any) {
       console.error('Delete from local storage error:', error);

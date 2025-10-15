@@ -13,10 +13,10 @@ const getTranscriber = async () => {
     console.log(
       "Loading Whisper model (this may take a few minutes on first run)..."
     );
-    // Using whisper-base for better accuracy
+    // Using whisper-small for better accuracy (good balance between speed and quality)
     transcriber = await pipeline(
       "automatic-speech-recognition",
-      "Xenova/whisper-base",
+      "Xenova/whisper-small",
       {
         quantized: false,
       }
@@ -67,7 +67,7 @@ const readAudioFile = (audioPath: string): Float32Array => {
 
   // Normalize to [-1, 1] range (critical for Whisper)
   const typedSamples = samples as Float32Array;
-  
+
   // Find max value without spread operator (avoid stack overflow)
   let maxVal = 0;
   for (let i = 0; i < typedSamples.length; i++) {
@@ -96,9 +96,10 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
         audioData.length
       } samples (${durationInSeconds.toFixed(1)}s duration)`
     );
-    
+
     // Find min/max without spread operator
-    let min = audioData[0], max = audioData[0];
+    let min = audioData[0],
+      max = audioData[0];
     for (let i = 1; i < audioData.length; i++) {
       if (audioData[i] < min) min = audioData[i];
       if (audioData[i] > max) max = audioData[i];
@@ -222,11 +223,13 @@ export const processVideoTranscription = async (
       .update({ status: "processing" })
       .eq("id", videoId);
 
-    // Extract audio
-    const audioPath = path.join(
-      path.dirname(videoPath),
-      `${path.basename(videoPath, path.extname(videoPath))}.wav`
-    );
+    // Get video directory
+    const STORAGE_TYPE = process.env.STORAGE_TYPE || 'local';
+    const VIDEOS_DIR = path.join(__dirname, '../../', process.env.VIDEOS_DIR || 'videos');
+    const videoDir = path.join(VIDEOS_DIR, userId, videoId);
+    
+    // Extract audio to video directory
+    const audioPath = path.join(videoDir, 'audio.wav');
 
     await extractAudio(videoPath, audioPath);
 

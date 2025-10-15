@@ -217,6 +217,26 @@ const FileManager = () => {
               {filteredFolders.map((folder) => (
                 <div
                   key={folder.id}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add('bg-primary-50', 'dark:bg-primary-900/20');
+                  }}
+                  onDragLeave={(e) => {
+                    e.currentTarget.classList.remove('bg-primary-50', 'dark:bg-primary-900/20');
+                  }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('bg-primary-50', 'dark:bg-primary-900/20');
+                    const videoId = e.dataTransfer.getData('videoId');
+                    if (videoId) {
+                      try {
+                        await api.put(`/api/videos/${videoId}`, { folder_id: folder.id });
+                        loadData();
+                      } catch (error) {
+                        console.error('Failed to move video:', error);
+                      }
+                    }
+                  }}
                   className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group"
                 >
                   <button
@@ -249,9 +269,14 @@ const FileManager = () => {
               {filteredVideos.map((video) => (
                 <div
                   key={video.id}
-                  className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('videoId', video.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group cursor-move"
                 >
-                  <Link to={`/video/${video.id}`} className="flex items-center flex-1">
+                  <Link to={`/video/${video.id}`} className="flex items-center flex-1" draggable={false}>
                     <Video className="w-10 h-10 text-gray-400 mr-4" />
                     <div className="flex-1">
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white">

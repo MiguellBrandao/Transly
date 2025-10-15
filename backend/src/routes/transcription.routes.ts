@@ -34,30 +34,37 @@ router.get('/export/:videoId/:format', authMiddleware, async (req: AuthRequest, 
     const userId = req.user?.id;
     const { videoId, format } = req.params;
 
-    // Get transcription
-    const { data: transcription, error } = await supabaseAdmin
+    // Get transcription with video info
+    const { data: transcription, error: transcriptionError } = await supabaseAdmin
       .from('transcriptions')
-      .select('*, videos(title)')
+      .select('*')
       .eq('video_id', videoId)
       .eq('user_id', userId)
       .single();
 
-    if (error || !transcription) {
+    if (transcriptionError || !transcription) {
       return res.status(404).json({ error: 'Transcription not found' });
     }
 
-    const videoTitle = (transcription as any).videos?.title || 'transcription';
+    // Get video title
+    const { data: video } = await supabaseAdmin
+      .from('videos')
+      .select('title')
+      .eq('id', videoId)
+      .single();
+
+    const videoTitle = video?.title || 'transcription';
 
     switch (format.toLowerCase()) {
       case 'txt':
         const txtBuffer = await exportTranscriptionTxt(transcription);
-        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="${videoTitle}.txt"`);
         return res.send(txtBuffer);
 
       case 'csv':
         const csvBuffer = await exportTranscriptionCsv(transcription);
-        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="${videoTitle}.csv"`);
         return res.send(csvBuffer);
 

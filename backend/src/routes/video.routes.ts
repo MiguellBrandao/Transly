@@ -97,10 +97,7 @@ router.post('/upload', authMiddleware, upload.single('video'), async (req: AuthR
       return res.status(400).json({ error: 'No video file provided' });
     }
 
-    // Upload to Supabase Storage
-    const storageUrl = await uploadVideoToStorage(file.path, file.filename, userId!);
-
-    // Create video record in database
+    // Create video record in database first to get video ID
     const { data: video, error } = await supabaseAdmin
       .from('videos')
       .insert({
@@ -110,7 +107,7 @@ router.post('/upload', authMiddleware, upload.single('video'), async (req: AuthR
         original_filename: file.originalname,
         size: file.size,
         mimetype: file.mimetype,
-        storage_url: storageUrl,
+        storage_url: 'pending', // Will update after upload
         folder_id: folder_id || null,
         status: 'uploaded',
       })
@@ -120,6 +117,15 @@ router.post('/upload', authMiddleware, upload.single('video'), async (req: AuthR
     if (error) {
       return res.status(400).json({ error: error.message });
     }
+
+    // Upload to storage with video ID
+    const storageUrl = await uploadVideoToStorage(file.path, file.filename, userId!, video.id);
+
+    // Update video with storage URL
+    await supabaseAdmin
+      .from('videos')
+      .update({ storage_url: storageUrl })
+      .eq('id', video.id);
 
     // Start transcription process in background
     processVideoTranscription(video.id, file.path, userId!).catch(err => {
@@ -169,7 +175,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     // Get video info
     const { data: video, error: fetchError } = await supabaseAdmin
       .from('videos')
-      .select('filename')
+      .select('id')
       .eq('id', id)
       .eq('user_id', userId)
       .single();
@@ -179,7 +185,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     }
 
     // Delete from storage
-    await deleteVideoFromStorage(video.filename, userId!);
+    await deleteVideoFromStorage(video.id, userId!);
 
     // Delete from database
     const { error } = await supabaseAdmin
