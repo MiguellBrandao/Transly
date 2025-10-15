@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import { api } from '../config/api';
 import { Upload as UploadIcon, CheckCircle, XCircle } from 'lucide-react';
+import { videoCompressionService } from '../services/compression.service';
 
 const Upload = () => {
   const { t } = useTranslation();
@@ -12,15 +13,20 @@ const Upload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [originalSize, setOriginalSize] = useState(0);
+  const [compressedSize, setCompressedSize] = useState(0);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
       setTitle(selectedFile.name.replace(/\.[^/.]+$/, ''));
+      setOriginalSize(selectedFile.size);
+      setCompressedSize(0);
       setError('');
       setSuccess(false);
     }
@@ -32,6 +38,8 @@ const Upload = () => {
     if (droppedFile && droppedFile.type.startsWith('video/')) {
       setFile(droppedFile);
       setTitle(droppedFile.name.replace(/\.[^/.]+$/, ''));
+      setOriginalSize(droppedFile.size);
+      setCompressedSize(0);
       setError('');
       setSuccess(false);
     }
@@ -49,13 +57,43 @@ const Upload = () => {
       return;
     }
 
-    setUploading(true);
     setError('');
     setProgress(0);
 
     try {
+      let fileToUpload = file;
+      const fileSizeMB = file.size / (1024 * 1024);
+      const compressionThreshold = Number(import.meta.env.VITE_COMPRESSION_THRESHOLD_MB) || 100;
+
+      // Compress video if larger than threshold
+      if (fileSizeMB > compressionThreshold) {
+        setCompressing(true);
+        console.log(`🗜️ Video is ${fileSizeMB.toFixed(1)}MB, compressing before upload...`);
+        
+        try {
+          fileToUpload = await videoCompressionService.compressVideo(
+            file,
+            (progress, stage) => {
+              setProgress(progress);
+            }
+          );
+          setCompressedSize(fileToUpload.size);
+          console.log(`✅ Compressed from ${fileSizeMB.toFixed(1)}MB to ${(fileToUpload.size / (1024 * 1024)).toFixed(1)}MB`);
+        } catch (compressionError) {
+          console.error('⚠️ Compression failed, uploading original file:', compressionError);
+          // Continue with original file if compression fails
+          fileToUpload = file;
+        } finally {
+          setCompressing(false);
+        }
+      }
+
+      // Upload the file (compressed or original)
+      setUploading(true);
+      setProgress(0);
+
       const formData = new FormData();
-      formData.append('video', file);
+      formData.append('video', fileToUpload);
       formData.append('title', title);
 
       await api.upload('/api/videos/upload', formData, (p) => setProgress(p));
@@ -68,6 +106,7 @@ const Upload = () => {
       setError(err.message || t('upload.error'));
     } finally {
       setUploading(false);
+      setCompressing(false);
     }
   };
 
@@ -141,8 +180,27 @@ const Upload = () => {
                 </div>
               )}
 
-              {/* Progress Bar */}
-              {uploading && (
+              {/* Compression Progress */}
+              {compressing && (
+                <div className="mb-6">
+                  <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300 mb-2">
+                    <span>{t('upload.compressing')}</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    {t('upload.compressingInfo')}
+                  </p>
+                </div>
+              )}
+
+              {/* Upload Progress */}
+              {uploading && !compressing && (
                 <div className="mb-6">
                   <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300 mb-2">
                     <span>{t('upload.uploading')}</span>
@@ -154,6 +212,15 @@ const Upload = () => {
                       style={{ width: `${progress}%` }}
                     ></div>
                   </div>
+                  {compressedSize > 0 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      {t('upload.uploadingCompressed', {
+                        original: (originalSize / (1024 * 1024)).toFixed(1),
+                        compressed: (compressedSize / (1024 * 1024)).toFixed(1),
+                        reduction: (((originalSize - compressedSize) / originalSize) * 100).toFixed(0)
+                      })}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -168,10 +235,14 @@ const Upload = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={!file || uploading}
+                disabled={!file || uploading || compressing}
                 className="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uploading ? t('upload.uploading') : t('upload.selectFile')}
+                {compressing 
+                  ? t('upload.compressing')
+                  : uploading 
+                    ? t('upload.uploading') 
+                    : t('upload.selectFile')}
               </button>
             </form>
           )}

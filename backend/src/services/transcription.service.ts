@@ -31,11 +31,14 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
       `🔧 Starting transcription in worker thread (model: ${WHISPER_MODEL.toUpperCase()})...`
     );
 
-    const workerPath = path.join(__dirname, "../workers/transcription.worker.ts");
+    const workerPath = path.join(
+      __dirname,
+      "../workers/transcription.worker.ts"
+    );
     const worker = new Worker(workerPath, {
       workerData: { audioPath },
       env: process.env,
-      execArgv: ['--require', 'tsx/cjs'],
+      execArgv: ["--require", "tsx/cjs"],
     });
 
     worker.on("message", (message) => {
@@ -139,27 +142,14 @@ export const processVideoTranscription = async (
     );
     const videoDir = path.join(VIDEOS_DIR, userId, videoId);
 
-    // Extract audio FIRST with ORIGINAL quality (for best transcription)
+    // Extract audio and transcribe
     const audioPath = path.join(videoDir, "audio.wav");
-    console.log("🎵 Extracting audio with original quality for transcription...");
+    console.log("🎵 Extracting audio for transcription...");
     await extractAudio(videoPath, audioPath);
 
-    // Compress video in parallel (if enabled)
-    const { compressVideo } = await import('./compression.service');
-    const videoStoragePath = path.join(videoDir, "video.mp4");
-    
-    // Start both processes
-    const [, transcriptionResult] = await Promise.all([
-      // Compress video
-      compressVideo(videoPath, videoStoragePath).catch(err => {
-        console.error('Compression failed, using original:', err);
-        // If compression fails, just copy original
-        fs.copyFileSync(videoPath, videoStoragePath);
-        return videoStoragePath;
-      }),
-      // Transcribe audio (uses original quality!)
-      transcribeAudio(audioPath),
-    ]);
+    // Transcribe audio
+    console.log("🎙️ Starting transcription...");
+    const transcriptionResult = await transcribeAudio(audioPath);
 
     // Group words into sentences
     const sentences = groupWordsIntoSentences(transcriptionResult.words);
@@ -186,7 +176,7 @@ export const processVideoTranscription = async (
       console.log(`🗑️ Cleaned up original upload file`);
     }
 
-    console.log(`✅ Transcription and compression completed for video ${videoId}`);
+    console.log(`✅ Transcription completed for video ${videoId}`);
 
     // Emit WebSocket event to notify clients
     io.emit("transcription:completed", {
