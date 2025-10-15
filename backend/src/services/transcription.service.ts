@@ -9,35 +9,33 @@ import { io } from "../index";
 // Cache the model to avoid reloading
 let transcriber: any = null;
 
-const WHISPER_MODEL = process.env.WHISPER_MODEL || 'tiny';
+const WHISPER_MODEL = process.env.WHISPER_MODEL || "tiny";
 
 const getModelName = (): string => {
   const modelMap: { [key: string]: string } = {
-    'tiny': 'Xenova/whisper-tiny',    // ~150MB - Fast, less accurate
-    'base': 'Xenova/whisper-base',    // ~500MB - Balanced
-    'small': 'Xenova/whisper-small',  // ~1GB - Slow, most accurate
+    tiny: "Xenova/whisper-tiny", // ~150MB - Fast, less accurate
+    base: "Xenova/whisper-base", // ~500MB - Balanced
+    small: "Xenova/whisper-small", // ~1GB - Slow, most accurate
   };
-  return modelMap[WHISPER_MODEL] || modelMap['tiny'];
+  return modelMap[WHISPER_MODEL] || modelMap["tiny"];
 };
 
 const getTranscriber = async () => {
-  if (WHISPER_MODEL === 'mock') {
+  if (WHISPER_MODEL === "mock") {
     console.log("⚠️ Using MOCK mode - no AI transcription");
     return null;
   }
 
   if (!transcriber) {
     const modelName = getModelName();
-    console.log(`🤖 Loading Whisper model: ${WHISPER_MODEL.toUpperCase()} (${modelName})`);
-    console.log("   This may take a few minutes on first run...");
-    
-    transcriber = await pipeline(
-      "automatic-speech-recognition",
-      modelName,
-      {
-        quantized: false,
-      }
+    console.log(
+      `🤖 Loading Whisper model: ${WHISPER_MODEL.toUpperCase()} (${modelName})`
     );
+    console.log("   This may take a few minutes on first run...");
+
+    transcriber = await pipeline("automatic-speech-recognition", modelName, {
+      quantized: false,
+    });
     console.log("✅ Whisper model loaded successfully!");
   }
   return transcriber;
@@ -104,6 +102,13 @@ const readAudioFile = (audioPath: string): Float32Array => {
 };
 
 export const transcribeAudio = async (audioPath: string): Promise<any> => {
+  // If using mock mode, return mock data immediately
+  if (WHISPER_MODEL === 'mock') {
+    console.log("🎭 MOCK mode: Returning sample transcription (no AI processing)");
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
+    return getMockTranscription();
+  }
+
   try {
     console.log("📖 Reading audio file...");
     const audioData = readAudioFile(audioPath);
@@ -123,7 +128,7 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
     }
     console.log(`   Audio range: [${min.toFixed(3)}, ${max.toFixed(3)}]`);
 
-    console.log("🎤 Starting Whisper transcription...");
+    console.log(`🎤 Starting Whisper transcription with model: ${WHISPER_MODEL.toUpperCase()}...`);
     const model = await getTranscriber();
 
     // Transcribe with better options
