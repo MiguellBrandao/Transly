@@ -31,13 +31,12 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
       `🔧 Starting transcription in worker thread (model: ${WHISPER_MODEL.toUpperCase()})...`
     );
 
-    const worker = new Worker(
-      path.join(__dirname, "../workers/transcription.worker.js"),
-      {
-        workerData: { audioPath },
-        env: process.env,
-      }
-    );
+    const workerPath = path.join(__dirname, "../workers/transcription.worker.ts");
+    const worker = new Worker(workerPath, {
+      workerData: { audioPath },
+      env: process.env,
+      execArgv: ['--require', 'tsx/cjs'],
+    });
 
     worker.on("message", (message) => {
       if (message.success) {
