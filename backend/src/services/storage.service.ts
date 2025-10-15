@@ -27,8 +27,9 @@ export const uploadVideoToStorage = async (
         fs.mkdirSync(videoDir, { recursive: true });
       }
 
-      const ext = path.extname(filename);
-      const videoFilename = `video${ext}`;
+      // Just copy to uploads directory
+      // Compression will happen during transcription process
+      const videoFilename = `video.mp4`;
       const destinationPath = path.join(videoDir, videoFilename);
       fs.copyFileSync(filePath, destinationPath);
 

@@ -139,13 +139,27 @@ export const processVideoTranscription = async (
     );
     const videoDir = path.join(VIDEOS_DIR, userId, videoId);
 
-    // Extract audio to video directory
+    // Extract audio FIRST with ORIGINAL quality (for best transcription)
     const audioPath = path.join(videoDir, "audio.wav");
-
+    console.log("🎵 Extracting audio with original quality for transcription...");
     await extractAudio(videoPath, audioPath);
 
-    // Transcribe using worker thread (non-blocking!)
-    const transcriptionResult = await transcribeAudio(audioPath);
+    // Compress video in parallel (if enabled)
+    const { compressVideo } = await import('./compression.service');
+    const videoStoragePath = path.join(videoDir, "video.mp4");
+    
+    // Start both processes
+    const [, transcriptionResult] = await Promise.all([
+      // Compress video
+      compressVideo(videoPath, videoStoragePath).catch(err => {
+        console.error('Compression failed, using original:', err);
+        // If compression fails, just copy original
+        fs.copyFileSync(videoPath, videoStoragePath);
+        return videoStoragePath;
+      }),
+      // Transcribe audio (uses original quality!)
+      transcribeAudio(audioPath),
+    ]);
 
     // Group words into sentences
     const sentences = groupWordsIntoSentences(transcriptionResult.words);
@@ -166,12 +180,13 @@ export const processVideoTranscription = async (
       .update({ status: "completed" })
       .eq("id", videoId);
 
-    // Clean up video file from uploads (keep the one in videos directory)
+    // Clean up original upload file
     if (fs.existsSync(videoPath)) {
       fs.unlinkSync(videoPath);
+      console.log(`🗑️ Cleaned up original upload file`);
     }
 
-    console.log(`✅ Transcription completed for video ${videoId}`);
+    console.log(`✅ Transcription and compression completed for video ${videoId}`);
 
     // Emit WebSocket event to notify clients
     io.emit("transcription:completed", {
