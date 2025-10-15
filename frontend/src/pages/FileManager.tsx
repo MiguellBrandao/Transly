@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import { api } from '../config/api';
+import { getSocket } from '../config/socket';
 import {
   Folder,
   Video,
@@ -44,16 +45,19 @@ const FileManager = () => {
 
   useEffect(() => {
     loadData();
-
-    // Auto-refresh every 5 seconds if there are processing videos
-    const interval = setInterval(() => {
-      if (videos.some(v => v.status === 'processing')) {
-        loadData();
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [currentFolder, videos]);
+    
+    // Connect to WebSocket for real-time updates
+    const socket = getSocket();
+    
+    socket.on('transcription:completed', () => {
+      console.log('✅ Transcription completed, refreshing files...');
+      loadData();
+    });
+    
+    return () => {
+      socket.off('transcription:completed');
+    };
+  }, [currentFolder]);
 
   const loadData = async () => {
     try {

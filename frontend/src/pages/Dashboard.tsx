@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import { api } from '../config/api';
+import { getSocket } from '../config/socket';
 import { Video, Upload, FileText, HardDrive } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
@@ -22,16 +23,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadVideos();
-
-    // Auto-refresh every 5 seconds if there are processing videos
-    const interval = setInterval(() => {
-      if (videos.some(v => v.status === 'processing')) {
-        loadVideos();
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [videos]);
+    
+    // Connect to WebSocket for real-time updates
+    const socket = getSocket();
+    
+    socket.on('transcription:completed', () => {
+      console.log('✅ Transcription completed, refreshing...');
+      loadVideos();
+    });
+    
+    return () => {
+      socket.off('transcription:completed');
+    };
+  }, []);
 
   const loadVideos = async () => {
     try {

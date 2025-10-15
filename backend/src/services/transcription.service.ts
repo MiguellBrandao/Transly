@@ -4,6 +4,7 @@ import fs from "fs";
 import { supabaseAdmin } from "../config/supabase";
 import { pipeline } from "@xenova/transformers";
 import { WaveFile } from "wavefile";
+import { io } from "../index";
 
 // Cache the model to avoid reloading
 let transcriber: any = null;
@@ -259,17 +260,18 @@ export const processVideoTranscription = async (
       .update({ status: "completed" })
       .eq("id", videoId);
 
-    // Clean up temporary audio file
-    if (fs.existsSync(audioPath)) {
-      fs.unlinkSync(audioPath);
-    }
-
-    // Clean up video file from local storage
+    // Clean up video file from uploads (keep the one in videos directory)
     if (fs.existsSync(videoPath)) {
       fs.unlinkSync(videoPath);
     }
 
-    console.log(`Transcription completed for video ${videoId}`);
+    console.log(`✅ Transcription completed for video ${videoId}`);
+    
+    // Emit WebSocket event to notify clients
+    io.emit('transcription:completed', {
+      videoId,
+      userId,
+    });
   } catch (error) {
     console.error("Process video transcription error:", error);
 

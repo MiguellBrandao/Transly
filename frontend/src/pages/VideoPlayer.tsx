@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import { api } from '../config/api';
+import { getSocket } from '../config/socket';
 import ReactPlayer from 'react-player';
 import {
   ArrowLeft,
@@ -59,16 +60,21 @@ const VideoPlayer = () => {
 
   useEffect(() => {
     loadData();
-
-    // Auto-refresh every 5 seconds if video is still processing
-    const interval = setInterval(() => {
-      if (video?.status === 'processing') {
+    
+    // Connect to WebSocket for real-time updates
+    const socket = getSocket();
+    
+    socket.on('transcription:completed', (data: any) => {
+      if (data.videoId === id) {
+        console.log('✅ Transcription completed for this video, refreshing...');
         loadData();
       }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [id, video?.status]);
+    });
+    
+    return () => {
+      socket.off('transcription:completed');
+    };
+  }, [id]);
 
   const loadData = async () => {
     try {

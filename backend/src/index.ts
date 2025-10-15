@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 // Load environment variables
 dotenv.config();
@@ -14,8 +16,19 @@ import transcriptionRoutes from "./routes/transcription.routes";
 import folderRoutes from "./routes/folder.routes";
 
 const app: Application = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' ? false : "http://localhost:3000",
+    methods: ["GET", "POST"]
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 const STORAGE_TYPE = process.env.STORAGE_TYPE || "local";
+
+// Make io instance available globally
+export { io };
 
 // Middleware
 app.use(cors());
@@ -75,9 +88,19 @@ app.use((err: any, _req: Request, res: Response, _next: any) => {
   });
 });
 
+// WebSocket connection handling
+io.on('connection', (socket) => {
+  console.log(`🔌 Client connected: ${socket.id}`);
+  
+  socket.on('disconnect', () => {
+    console.log(`🔌 Client disconnected: ${socket.id}`);
+  });
+});
+
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Transly API running on port ${PORT}`);
+  console.log(`🔌 WebSocket server ready`);
   console.log(`💾 Storage type: ${STORAGE_TYPE.toUpperCase()}`);
   console.log(`📁 Upload directory: ${uploadDir}`);
   console.log(`📁 Temp directory: ${tempDir}`);
