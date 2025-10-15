@@ -118,22 +118,23 @@ cd transly
    CREATE INDEX idx_transcriptions_video_id ON transcriptions(video_id);
    ```
 
+   **OPTIONAL - Only if using Supabase Storage:**
+   
+   The default storage is LOCAL (no Supabase Storage needed).
+   If you want to use Supabase Storage instead, set `STORAGE_TYPE=supabase` in `.env` and:
+   
    Go to **Storage** and create a public bucket named `videos`
-
-   Add storage policies:
-
+   
+   Add storage policies (via SQL Editor):
    ```sql
-   -- Insert policy
    CREATE POLICY "Users can upload videos"
    ON storage.objects FOR INSERT
    WITH CHECK (bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text);
 
-   -- Select policy
    CREATE POLICY "Users can view videos"
    ON storage.objects FOR SELECT
    USING (bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text);
 
-   -- Delete policy
    CREATE POLICY "Users can delete videos"
    ON storage.objects FOR DELETE
    USING (bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text);
@@ -159,8 +160,13 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
+# Storage: 'local' (recommended) or 'supabase'
+STORAGE_TYPE=local
+
 UPLOAD_DIR=uploads
 TEMP_DIR=temp
+VIDEOS_DIR=videos
+BASE_URL=http://localhost:3001
 ```
 
 Start backend:
