@@ -119,13 +119,14 @@ cd transly
    ```
 
    **OPTIONAL - Only if using Supabase Storage:**
-   
+
    The default storage is LOCAL (no Supabase Storage needed).
    If you want to use Supabase Storage instead, set `STORAGE_TYPE=supabase` in `.env` and:
-   
+
    Go to **Storage** and create a public bucket named `videos`
-   
+
    Add storage policies (via SQL Editor):
+
    ```sql
    CREATE POLICY "Users can upload videos"
    ON storage.objects FOR INSERT
