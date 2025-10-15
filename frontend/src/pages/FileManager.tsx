@@ -9,7 +9,7 @@ import {
   Search,
   Trash2,
   FolderPlus,
-  MoreVertical,
+  Edit2,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
@@ -313,11 +313,11 @@ const FileManager = () => {
                   }}
                   className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group"
                 >
-                  <div className="flex items-center flex-1 min-w-0">
-                    <Folder
-                      className="w-10 h-10 text-yellow-500 mr-4 flex-shrink-0 cursor-pointer"
-                      onClick={() => setCurrentFolder(folder.id)}
-                    />
+                  <button
+                    onClick={() => setCurrentFolder(folder.id)}
+                    className="flex items-center flex-1 min-w-0"
+                  >
+                    <Folder className="w-10 h-10 text-yellow-500 mr-4 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       {editingFolder === folder.id ? (
                         <input
@@ -339,15 +339,7 @@ const FileManager = () => {
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
-                        <div
-                          onClick={() => setCurrentFolder(folder.id)}
-                          onDoubleClick={(e) => {
-                            e.stopPropagation();
-                            setEditingFolder(folder.id);
-                            setEditFolderName(folder.name);
-                          }}
-                          className="text-left w-full cursor-pointer"
-                        >
+                        <div className="text-left w-full">
                           <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {folder.name}
                           </h3>
@@ -355,18 +347,35 @@ const FileManager = () => {
                             {formatDistanceToNow(new Date(folder.created_at), {
                               addSuffix: true,
                               locale,
-                            })} • {t('files.doubleClickRename')}
+                            })}
                           </p>
                         </div>
                       )}
                     </div>
-                  </div>
-                  <button
-                    onClick={() => deleteFolder(folder.id)}
-                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-5 h-5" />
                   </button>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingFolder(folder.id);
+                        setEditFolderName(folder.name);
+                      }}
+                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                      title={t('files.rename')}
+                    >
+                      <Edit2 className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteFolder(folder.id);
+                      }}
+                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      title={t('files.delete')}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               ))}
 
