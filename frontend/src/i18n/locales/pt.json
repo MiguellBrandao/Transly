@@ -1,0 +1,103 @@
+{
+  "app": {
+    "name": "Transly",
+    "tagline": "Transcrição de Vídeos com IA"
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Registar",
+    "logout": "Sair",
+    "email": "Email",
+    "password": "Palavra-passe",
+    "name": "Nome",
+    "signIn": "Entrar",
+    "signUp": "Registar",
+    "dontHaveAccount": "Não tem uma conta?",
+    "alreadyHaveAccount": "Já tem uma conta?",
+    "loginSuccess": "Login efetuado com sucesso!",
+    "registerSuccess": "Registo efetuado com sucesso!",
+    "error": "Ocorreu um erro. Por favor, tente novamente."
+  },
+  "nav": {
+    "dashboard": "Painel",
+    "upload": "Carregar",
+    "files": "Ficheiros",
+    "settings": "Definições"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "recentVideos": "Vídeos Recentes",
+    "stats": {
+      "totalVideos": "Total de Vídeos",
+      "totalTranscriptions": "Transcrições",
+      "storageUsed": "Armazenamento Usado"
+    },
+    "noVideos": "Ainda não tem vídeos. Carregue o seu primeiro vídeo!",
+    "uploadFirst": "Carregar Vídeo"
+  },
+  "upload": {
+    "title": "Carregar Vídeo",
+    "dragDrop": "Arraste e solte o seu vídeo aqui",
+    "or": "ou",
+    "browse": "Procurar ficheiros",
+    "selectFile": "Selecionar ficheiro de vídeo",
+    "uploading": "A carregar...",
+    "processing": "A processar...",
+    "success": "Vídeo carregado com sucesso!",
+    "error": "Falha no carregamento. Por favor, tente novamente.",
+    "formats": "Formatos suportados: MP4, AVI, MOV, WEBM, MKV",
+    "maxSize": "Tamanho máximo: 500MB"
+  },
+  "files": {
+    "title": "Gestor de Ficheiros",
+    "newFolder": "Nova Pasta",
+    "search": "Pesquisar ficheiros...",
+    "name": "Nome",
+    "size": "Tamanho",
+    "date": "Data",
+    "status": "Estado",
+    "actions": "Ações",
+    "delete": "Eliminar",
+    "rename": "Renomear",
+    "move": "Mover",
+    "download": "Descarregar",
+    "folder": "Pasta",
+    "video": "Vídeo",
+    "confirmDelete": "Tem a certeza que deseja eliminar isto?",
+    "folderName": "Nome da pasta"
+  },
+  "player": {
+    "title": "Reprodutor de Vídeo",
+    "transcription": "Transcrição",
+    "search": "Pesquisar na transcrição...",
+    "copyAll": "Copiar Tudo",
+    "copySentence": "Copiar Frase",
+    "export": "Exportar",
+    "exportTxt": "Exportar como TXT",
+    "exportCsv": "Exportar como CSV",
+    "exportDocx": "Exportar como DOCX",
+    "speed": "Velocidade",
+    "noTranscription": "Transcrição ainda não disponível",
+    "processing": "A transcrição está a ser processada...",
+    "wordInfo": "Palavra: {{word}} | Início: {{start}}s | Fim: {{end}}s | Duração: {{duration}}s"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Fechar",
+    "loading": "A carregar...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "confirm": "Confirmar",
+    "back": "Voltar"
+  },
+  "status": {
+    "uploaded": "Carregado",
+    "processing": "A Processar",
+    "completed": "Concluído",
+    "failed": "Falhado"
+  }
+}
+
