@@ -1,4 +1,4 @@
-import { processVideoTranscription } from './transcription.service';
+import { processVideoTranscription } from "./transcription.service";
 
 interface QueueItem {
   videoId: string;
@@ -12,13 +12,17 @@ class TranscriptionQueue {
 
   add(item: QueueItem) {
     this.queue.push(item);
-    console.log(`📋 Added to queue: ${item.videoId} (Total in queue: ${this.queue.length})`);
-    
+    console.log(
+      `📋 Added to queue: ${item.videoId} (Total in queue: ${this.queue.length})`
+    );
+
     // Start processing if not already processing
     if (!this.processing) {
       this.processNext();
     } else {
-      console.log(`⏳ Video queued, waiting for current transcription to finish...`);
+      console.log(
+        `⏳ Video queued, waiting for current transcription to finish...`
+      );
     }
   }
 
@@ -30,10 +34,16 @@ class TranscriptionQueue {
     this.processing = true;
     const item = this.queue.shift()!;
 
-    console.log(`⚙️ Processing video ${item.videoId} (${this.queue.length} remaining in queue)`);
+    console.log(
+      `⚙️ Processing video ${item.videoId} (${this.queue.length} remaining in queue)`
+    );
 
     try {
-      await processVideoTranscription(item.videoId, item.videoPath, item.userId);
+      await processVideoTranscription(
+        item.videoId,
+        item.videoPath,
+        item.userId
+      );
     } catch (error) {
       console.error(`❌ Failed to process ${item.videoId}:`, error);
     } finally {
@@ -55,4 +65,3 @@ class TranscriptionQueue {
 }
 
 export const transcriptionQueue = new TranscriptionQueue();
-

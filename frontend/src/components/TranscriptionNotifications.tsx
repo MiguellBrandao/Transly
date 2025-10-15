@@ -13,7 +13,7 @@ interface Notification {
 
 const TranscriptionNotifications = () => {
   const { t } = useTranslation();
-  
+
   // Load notifications from localStorage
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     const saved = localStorage.getItem('transly_notifications');
@@ -51,13 +51,15 @@ const TranscriptionNotifications = () => {
 
     socket.on('transcription:completed', async (data: any) => {
       console.log('📢 Received transcription:completed event:', data);
-      setNotifications(prev =>
-        prev.map(n =>
+      setNotifications(prev => {
+        const updated = prev.map(n =>
           n.videoId === data.videoId
             ? { ...n, status: 'completed' as const, completedAt: Date.now() }
             : n
-        )
-      );
+        );
+        console.log('📢 Updated notifications:', updated);
+        return updated;
+      });
     });
 
     return () => {
@@ -108,7 +110,7 @@ const TranscriptionNotifications = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Header */}
         <div 
-          className="px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-700 dark:to-indigo-700 text-white flex items-center justify-between cursor-pointer hover:from-purple-700 hover:to-indigo-700 transition-all"
+          className="px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-700 dark:to-cyan-700 text-white flex items-center justify-between cursor-pointer hover:from-blue-700 hover:to-cyan-700 transition-all"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           <div className="flex items-center gap-2">
@@ -131,29 +133,29 @@ const TranscriptionNotifications = () => {
                 key={notification.videoId}
                 className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors ${
                   notification.status === 'processing'
-                    ? 'bg-purple-50 dark:bg-purple-900/10'
-                    : 'bg-emerald-50 dark:bg-emerald-900/10'
+                    ? 'bg-blue-50 dark:bg-blue-900/10'
+                    : 'bg-green-50 dark:bg-green-900/10'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2 flex-1 min-w-0">
                     {notification.status === 'processing' ? (
-                      <Loader2 className="w-4 h-4 text-purple-600 dark:text-purple-400 animate-spin flex-shrink-0 mt-0.5" />
+                      <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin flex-shrink-0 mt-0.5" />
                     ) : (
-                      <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs font-medium truncate ${
                         notification.status === 'processing'
-                          ? 'text-purple-900 dark:text-purple-200'
-                          : 'text-emerald-900 dark:text-emerald-200'
+                          ? 'text-blue-900 dark:text-blue-200'
+                          : 'text-green-900 dark:text-green-200'
                       }`}>
                         {notification.title || 'Video'}
                       </p>
                       <p className={`text-xs ${
                         notification.status === 'processing'
-                          ? 'text-purple-600 dark:text-purple-400'
-                          : 'text-emerald-600 dark:text-emerald-400'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-green-600 dark:text-green-400'
                       }`}>
                         {notification.status === 'processing'
                           ? t('notifications.processing')
