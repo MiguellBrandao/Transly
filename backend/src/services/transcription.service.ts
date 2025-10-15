@@ -10,12 +10,15 @@ let transcriber: any = null;
 
 const getTranscriber = async () => {
   if (!transcriber) {
-    console.log("Loading Whisper model...");
+    console.log("Loading Whisper model (this may take a few minutes on first run)...");
     transcriber = await pipeline(
       "automatic-speech-recognition",
-      "Xenova/whisper-tiny"
+      "Xenova/whisper-tiny",
+      { 
+        quantized: false,
+      }
     );
-    console.log("Whisper model loaded");
+    console.log("Whisper model loaded successfully!");
   }
   return transcriber;
 };
@@ -67,7 +70,7 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
     console.log("Reading audio file...");
     const audioData = readAudioFile(audioPath);
     console.log(`Audio data loaded: ${audioData.length} samples`);
-    
+
     console.log("Starting transcription...");
     const model = await getTranscriber();
 
@@ -99,7 +102,7 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
       const textWords = result.text.split(/\s+/);
       const duration = audioData.length / 16000; // samples / sample rate
       const timePerWord = duration / textWords.length;
-      
+
       textWords.forEach((word: string, idx: number) => {
         words.push({
           word: word,
@@ -110,7 +113,9 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
       });
     }
 
-    console.log(`Transcription completed: ${result.text.length} chars, ${words.length} words`);
+    console.log(
+      `Transcription completed: ${result.text.length} chars, ${words.length} words`
+    );
 
     return {
       text: result.text || "",
@@ -124,7 +129,8 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
 };
 
 const getMockTranscription = () => {
-  const mockText = "This is a sample transcription. The Whisper model will process your video and generate accurate text with word-level timestamps. You can click on any word to jump to that moment in the video.";
+  const mockText =
+    "This is a sample transcription. The Whisper model will process your video and generate accurate text with word-level timestamps. You can click on any word to jump to that moment in the video.";
   const mockWords = mockText.split(/\s+/).map((word, idx) => ({
     word: word,
     start: idx * 0.5,
