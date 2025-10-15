@@ -127,23 +127,3 @@ CREATE TRIGGER update_videos_updated_at BEFORE UPDATE ON videos
 
 CREATE TRIGGER update_transcriptions_updated_at BEFORE UPDATE ON transcriptions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Storage bucket setup (run this in Supabase Dashboard > Storage)
--- Bucket name: videos
--- Public: true (or configure based on your needs)
--- File size limit: 500MB
--- Allowed MIME types: video/*
-
--- RLS policies for storage (run in Supabase Dashboard > Storage > Policies)
--- Policy: "Users can upload their own videos"
---   Operation: INSERT
---   Policy definition: (bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text)
-
--- Policy: "Users can view their own videos"
---   Operation: SELECT
---   Policy definition: (bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text)
-
--- Policy: "Users can delete their own videos"
---   Operation: DELETE
---   Policy definition: (bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text)
-

@@ -19,6 +19,7 @@
 ## 🎯 Demo Features
 
 ### Video Player with Synchronized Transcription
+
 - Click any word to jump to that moment in the video
 - Current word is underlined during playback
 - Hover over words to see detailed timing information
@@ -26,6 +27,7 @@
 - Copy entire transcription or individual sentences
 
 ### Playback Controls
+
 - Speed control from 0.25x to 16x
 - Precise seek bar
 - Play/pause with visual feedback
@@ -41,16 +43,18 @@
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/yourusername/transly.git
 cd transly
 ```
 
 2. **Set up Supabase**
-   
+
    Create a new project at [supabase.com](https://supabase.com)
-   
+
    Go to **SQL Editor** and run this:
+
    ```sql
    -- Enable UUID extension
    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -115,8 +119,9 @@ cd transly
    ```
 
    Go to **Storage** and create a public bucket named `videos`
-   
+
    Add storage policies:
+
    ```sql
    -- Insert policy
    CREATE POLICY "Users can upload videos"
@@ -137,6 +142,7 @@ cd transly
    Go to **Authentication > Providers** and enable **Email**
 
 3. **Backend Setup**
+
 ```bash
 cd backend
 npm install
@@ -144,6 +150,7 @@ cp .env.example .env
 ```
 
 Edit `backend/.env`:
+
 ```env
 PORT=3001
 NODE_ENV=development
@@ -157,11 +164,13 @@ TEMP_DIR=temp
 ```
 
 Start backend:
+
 ```bash
 npm run dev
 ```
 
 4. **Frontend Setup** (in new terminal)
+
 ```bash
 cd frontend
 npm install
@@ -169,6 +178,7 @@ cp .env.example .env
 ```
 
 Edit `frontend/.env`:
+
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
@@ -176,6 +186,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 Start frontend:
+
 ```bash
 npm run dev
 ```
@@ -195,6 +206,7 @@ npm run dev
 ## 🏗️ Tech Stack
 
 ### Frontend
+
 - React 18
 - TypeScript
 - Vite
@@ -205,6 +217,7 @@ npm run dev
 - React Player
 
 ### Backend
+
 - Node.js
 - Express
 - TypeScript
@@ -213,6 +226,7 @@ npm run dev
 - Multer (file uploads)
 
 ### Database & Storage
+
 - Supabase (PostgreSQL)
 - Supabase Storage
 - Row Level Security (RLS)
@@ -242,6 +256,7 @@ transly/
 ## 🔧 Development
 
 ### Backend
+
 ```bash
 cd backend
 npm run dev      # Start development server
@@ -250,6 +265,7 @@ npm start        # Start production server
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm run dev      # Start development server
@@ -262,12 +278,14 @@ npm run preview  # Preview production build
 ### Option 1: Vercel (Frontend) + Railway (Backend)
 
 **Frontend on Vercel:**
+
 1. Connect your GitHub repository
 2. Set root directory to `frontend`
 3. Add environment variables
 4. Deploy!
 
 **Backend on Railway:**
+
 1. Connect your GitHub repository
 2. Set root directory to `backend`
 3. Add environment variables
@@ -287,27 +305,33 @@ See detailed deployment guides in the repo.
 ## 🐛 Troubleshooting
 
 ### FFmpeg not found
+
 **Windows:**
+
 ```powershell
 winget install FFmpeg
 ```
 
 **Mac:**
+
 ```bash
 brew install ffmpeg
 ```
 
 **Linux:**
+
 ```bash
 sudo apt install ffmpeg
 ```
 
 ### Transcription takes too long
+
 - First run downloads the Whisper model (~300MB)
 - Use shorter videos for testing (1-2 minutes)
 - Consider using OpenAI's Whisper API for faster results
 
 ### Video not playing
+
 - Check if the `videos` bucket exists in Supabase Storage
 - Verify storage policies are configured correctly
 - Check browser console for CORS errors
@@ -315,7 +339,9 @@ sudo apt install ffmpeg
 ## 🎨 Features Highlights
 
 ### Word-Level Transcription
+
 Every word has precise timestamps:
+
 ```json
 {
   "word": "hello",
@@ -326,14 +352,18 @@ Every word has precise timestamps:
 ```
 
 ### Sentence Grouping
+
 Words are intelligently grouped into sentences for better readability.
 
 ### Smart Search
+
 Search ignores accents and case:
+
 - "cafe" finds "café"
 - "hello" finds "Hello", "HELLO", "hello"
 
 ### Export Formats
+
 - **TXT**: Plain text transcription
 - **CSV**: Word-level data with timestamps (Excel-ready)
 - **DOCX**: Formatted document with timestamps
@@ -341,6 +371,7 @@ Search ignores accents and case:
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to:
+
 - Report bugs
 - Suggest new features
 - Submit pull requests
