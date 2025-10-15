@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import TranscriptionNotifications from './components/TranscriptionNotifications';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -22,10 +21,7 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <>
-                    <Dashboard />
-                    <TranscriptionNotifications />
-                  </>
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
@@ -33,10 +29,7 @@ function App() {
               path="/upload"
               element={
                 <ProtectedRoute>
-                  <>
-                    <Upload />
-                    <TranscriptionNotifications />
-                  </>
+                  <Upload />
                 </ProtectedRoute>
               }
             />
@@ -44,10 +37,7 @@ function App() {
               path="/files"
               element={
                 <ProtectedRoute>
-                  <>
-                    <FileManager />
-                    <TranscriptionNotifications />
-                  </>
+                  <FileManager />
                 </ProtectedRoute>
               }
             />
@@ -55,10 +45,7 @@ function App() {
               path="/video/:id"
               element={
                 <ProtectedRoute>
-                  <>
-                    <VideoPlayer />
-                    <TranscriptionNotifications />
-                  </>
+                  <VideoPlayer />
                 </ProtectedRoute>
               }
             />
