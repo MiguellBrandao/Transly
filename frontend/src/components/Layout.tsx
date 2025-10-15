@@ -50,9 +50,18 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200 dark:border-gray-700">
-            <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-              {t('app.name')}
-            </h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-600 dark:bg-primary-500 rounded-lg flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 6L18 12L8 18V6Z" fill="white"/>
+                  <rect x="6" y="20" width="12" height="1" rx="0.5" fill="white" opacity="0.8"/>
+                  <rect x="6" y="22" width="8" height="1" rx="0.5" fill="white" opacity="0.6"/>
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {t('app.name')}
+              </h1>
+            </div>
           </div>
 
           {/* Navigation */}

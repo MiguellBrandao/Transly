@@ -103,9 +103,11 @@ const readAudioFile = (audioPath: string): Float32Array => {
 
 export const transcribeAudio = async (audioPath: string): Promise<any> => {
   // If using mock mode, return mock data immediately
-  if (WHISPER_MODEL === 'mock') {
-    console.log("🎭 MOCK mode: Returning sample transcription (no AI processing)");
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
+  if (WHISPER_MODEL === "mock") {
+    console.log(
+      "🎭 MOCK mode: Returning sample transcription (no AI processing)"
+    );
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate processing time
     return getMockTranscription();
   }
 
@@ -128,7 +130,9 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
     }
     console.log(`   Audio range: [${min.toFixed(3)}, ${max.toFixed(3)}]`);
 
-    console.log(`🎤 Starting Whisper transcription with model: ${WHISPER_MODEL.toUpperCase()}...`);
+    console.log(
+      `🎤 Starting Whisper transcription with model: ${WHISPER_MODEL.toUpperCase()}...`
+    );
     const model = await getTranscriber();
 
     // Transcribe with better options
