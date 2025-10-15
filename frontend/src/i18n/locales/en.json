@@ -64,7 +64,9 @@
     "folder": "Folder",
     "video": "Video",
     "confirmDelete": "Are you sure you want to delete this?",
-    "folderName": "Folder name"
+    "folderName": "Folder name",
+    "dropToParent": "Drop here to move to parent folder",
+    "doubleClickRename": "Double-click to rename"
   },
   "player": {
     "title": "Video Player",

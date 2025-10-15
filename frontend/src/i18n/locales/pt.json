@@ -64,7 +64,9 @@
     "folder": "Pasta",
     "video": "Vídeo",
     "confirmDelete": "Tem a certeza que deseja eliminar isto?",
-    "folderName": "Nome da pasta"
+    "folderName": "Nome da pasta",
+    "dropToParent": "Arraste aqui para mover para a pasta anterior",
+    "doubleClickRename": "Duplo clique para renomear"
   },
   "player": {
     "title": "Reprodutor de Vídeo",

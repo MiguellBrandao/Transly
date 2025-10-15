@@ -44,14 +44,14 @@ const FileManager = () => {
 
   useEffect(() => {
     loadData();
-    
+
     // Auto-refresh every 5 seconds if there are processing videos
     const interval = setInterval(() => {
       if (videos.some(v => v.status === 'processing')) {
         loadData();
       }
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [currentFolder, videos]);
 
@@ -231,7 +231,7 @@ const FileManager = () => {
               }}
               className="flex-1 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center text-sm text-gray-600 dark:text-gray-400 hover:border-primary-400 transition-colors"
             >
-              📤 Drop here to move to parent folder
+              {t('files.dropToParent')}
             </div>
           </div>
         )}
@@ -314,7 +314,7 @@ const FileManager = () => {
                   className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group"
                 >
                   <div className="flex items-center flex-1 min-w-0">
-                    <Folder 
+                    <Folder
                       className="w-10 h-10 text-yellow-500 mr-4 flex-shrink-0 cursor-pointer"
                       onClick={() => setCurrentFolder(folder.id)}
                     />
@@ -355,7 +355,7 @@ const FileManager = () => {
                             {formatDistanceToNow(new Date(folder.created_at), {
                               addSuffix: true,
                               locale,
-                            })} • Double-click to rename
+                            })} • {t('files.doubleClickRename')}
                           </p>
                         </div>
                       )}

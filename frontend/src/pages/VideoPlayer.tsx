@@ -59,14 +59,14 @@ const VideoPlayer = () => {
 
   useEffect(() => {
     loadData();
-    
+
     // Auto-refresh every 5 seconds if video is still processing
     const interval = setInterval(() => {
       if (video?.status === 'processing') {
         loadData();
       }
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [id, video?.status]);
 
