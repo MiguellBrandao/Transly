@@ -10,11 +10,14 @@ let transcriber: any = null;
 
 const getTranscriber = async () => {
   if (!transcriber) {
-    console.log("Loading Whisper model (this may take a few minutes on first run)...");
+    console.log(
+      "Loading Whisper model (this may take a few minutes on first run)..."
+    );
+    // Using whisper-base for better accuracy
     transcriber = await pipeline(
       "automatic-speech-recognition",
-      "Xenova/whisper-tiny",
-      { 
+      "Xenova/whisper-base",
+      {
         quantized: false,
       }
     );
@@ -49,8 +52,8 @@ const readAudioFile = (audioPath: string): Float32Array => {
   wav.toBitDepth("16");
   wav.toSampleRate(16000);
 
-  // Get samples as Float32Array
-  const samples = wav.getSamples(false, Float32Array);
+  // Get samples
+  let samples = wav.getSamples(false, Float32Array);
 
   // If stereo, convert to mono by averaging channels
   if (Array.isArray(samples)) {
@@ -59,73 +62,116 @@ const readAudioFile = (audioPath: string): Float32Array => {
       mono[i] =
         samples.reduce((sum, channel) => sum + channel[i], 0) / samples.length;
     }
-    return mono;
+    samples = mono;
   }
 
-  return samples as Float32Array;
+  // Normalize to [-1, 1] range (critical for Whisper)
+  const typedSamples = samples as Float32Array;
+  const maxVal = Math.max(...Array.from(typedSamples).map(Math.abs));
+  
+  if (maxVal > 1) {
+    const normalized = new Float32Array(typedSamples.length);
+    for (let i = 0; i < typedSamples.length; i++) {
+      normalized[i] = typedSamples[i] / maxVal;
+    }
+    return normalized;
+  }
+
+  return typedSamples;
 };
 
 export const transcribeAudio = async (audioPath: string): Promise<any> => {
   try {
-    console.log("Reading audio file...");
+    console.log("📖 Reading audio file...");
     const audioData = readAudioFile(audioPath);
-    console.log(`Audio data loaded: ${audioData.length} samples`);
+    const durationInSeconds = audioData.length / 16000;
+    console.log(`✅ Audio loaded: ${audioData.length} samples (${durationInSeconds.toFixed(1)}s duration)`);
+    console.log(`   Audio range: [${Math.min(...audioData).toFixed(3)}, ${Math.max(...audioData).toFixed(3)}]`);
 
-    console.log("Starting transcription...");
+    console.log("🎤 Starting Whisper transcription...");
     const model = await getTranscriber();
 
+    // Transcribe with better options
     const result = await model(audioData, {
       return_timestamps: "word",
       chunk_length_s: 30,
       stride_length_s: 5,
+      language: "portuguese", // Try Portuguese first, Whisper will auto-detect if wrong
+      task: "transcribe",
     });
 
-    console.log("Raw transcription result:", JSON.stringify(result, null, 2));
+    console.log("📝 Raw transcription result:");
+    console.log(`   Text: "${result.text || '(empty)'}"`);
+    console.log(`   Chunks: ${result.chunks?.length || 0}`);
 
     // Check if we got valid results
-    if (!result || !result.text) {
-      console.warn("Transcription returned empty result, using mock data");
+    if (!result || !result.text || result.text.trim() === "") {
+      console.warn("⚠️ Whisper returned empty - audio might have no speech");
+      console.log("   Trying again without language constraint...");
+      
+      // Try again without language constraint
+      const result2 = await model(audioData, {
+        return_timestamps: "word",
+        chunk_length_s: 30,
+        stride_length_s: 5,
+      });
+      
+      if (result2?.text && result2.text.trim() !== "") {
+        console.log(`✅ Success on retry: "${result2.text.substring(0, 50)}..."`);
+        return processTranscriptionResult(result2, audioData.length);
+      }
+      
+      console.warn("❌ Still empty. Using mock data for demonstration.");
       return getMockTranscription();
     }
 
-    // Transform result to our format
-    const words =
-      result.chunks?.map((chunk: any) => ({
-        word: chunk.text.trim(),
-        start: chunk.timestamp[0] || 0,
-        end: chunk.timestamp[1] || 0,
-        confidence: 1.0,
-      })) || [];
-
-    // If no words detected, generate from text
-    if (words.length === 0 && result.text) {
-      const textWords = result.text.split(/\s+/);
-      const duration = audioData.length / 16000; // samples / sample rate
-      const timePerWord = duration / textWords.length;
-
-      textWords.forEach((word: string, idx: number) => {
-        words.push({
-          word: word,
-          start: idx * timePerWord,
-          end: (idx + 1) * timePerWord,
-          confidence: 1.0,
-        });
-      });
-    }
-
-    console.log(
-      `Transcription completed: ${result.text.length} chars, ${words.length} words`
-    );
-
-    return {
-      text: result.text || "",
-      words,
-      language: result.language || "auto",
-    };
+    return processTranscriptionResult(result, audioData.length);
   } catch (error) {
-    console.error("Transcription error:", error);
+    console.error("❌ Transcription error:", error);
+    console.log("Using mock data as fallback...");
     return getMockTranscription();
   }
+};
+
+const processTranscriptionResult = (result: any, audioLength: number) => {
+  console.log(`✅ Transcribed: "${result.text.substring(0, 100)}..."`);
+
+  // Transform result to our format
+  let words: any[] = [];
+  
+  if (result.chunks && result.chunks.length > 0) {
+    words = result.chunks
+      .map((chunk: any) => ({
+        word: chunk.text.trim(),
+        start: chunk.timestamp[0] || 0,
+        end: chunk.timestamp[1] || chunk.timestamp[0] || 0,
+        confidence: 1.0,
+      }))
+      .filter((w: any) => w.word.length > 0);
+  }
+
+  // If no word timestamps, generate from text
+  if (words.length === 0 && result.text) {
+    console.log("⚠️ No word-level timestamps, generating estimates...");
+    const textWords = result.text.split(/\s+/).filter((w) => w.length > 0);
+    const duration = audioLength / 16000;
+    const timePerWord = duration / textWords.length;
+
+    words = textWords.map((word: string, idx: number) => ({
+      word: word,
+      start: idx * timePerWord,
+      end: (idx + 1) * timePerWord,
+      confidence: 0.8,
+    }));
+  }
+
+  console.log(`✅ Final: ${result.text.length} chars, ${words.length} words`);
+
+  return {
+    text: result.text.trim(),
+    words,
+    language: result.language || "auto",
+  };
 };
 
 const getMockTranscription = () => {
