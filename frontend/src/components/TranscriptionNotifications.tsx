@@ -27,44 +27,55 @@ const TranscriptionNotifications = () => {
   }, [notifications]);
 
   useEffect(() => {
+    console.log('🔔 TranscriptionNotifications component mounted, connecting to WebSocket...');
     const socket = getSocket();
 
-    socket.on('transcription:started', async (data: any) => {
-      console.log('📢 Received transcription:started event:', data);
+    const handleStarted = async (data: any) => {
+      console.log('📢 [NOTIFICATION] Received transcription:started event:', data);
       try {
         const video = await api.get(`/api/videos/${data.videoId}`);
         setNotifications(prev => {
           const filtered = prev.filter(n => n.videoId !== data.videoId);
-          return [
+          const newNotifs = [
             {
               videoId: data.videoId,
-              status: 'processing',
+              status: 'processing' as const,
               title: video.title,
             },
             ...filtered,
           ];
+          console.log('📢 [NOTIFICATION] Added to notifications:', newNotifs);
+          return newNotifs;
         });
       } catch (error) {
         console.error('Failed to get video info:', error);
       }
-    });
+    };
 
-    socket.on('transcription:completed', async (data: any) => {
-      console.log('📢 Received transcription:completed event:', data);
+    const handleCompleted = async (data: any) => {
+      console.log('📢 [NOTIFICATION] Received transcription:completed event:', data);
       setNotifications(prev => {
-        const updated = prev.map(n =>
-          n.videoId === data.videoId
-            ? { ...n, status: 'completed' as const, completedAt: Date.now() }
-            : n
-        );
-        console.log('📢 Updated notifications:', updated);
+        const updated = prev.map(n => {
+          if (n.videoId === data.videoId) {
+            console.log(`📢 [NOTIFICATION] Updating ${n.videoId} to completed`);
+            return { ...n, status: 'completed' as const, completedAt: Date.now() };
+          }
+          return n;
+        });
+        console.log('📢 [NOTIFICATION] Updated notifications:', updated);
         return updated;
       });
-    });
+    };
+
+    socket.on('transcription:started', handleStarted);
+    socket.on('transcription:completed', handleCompleted);
+
+    console.log('🔔 WebSocket listeners registered');
 
     return () => {
-      socket.off('transcription:started');
-      socket.off('transcription:completed');
+      console.log('🔔 Cleaning up WebSocket listeners');
+      socket.off('transcription:started', handleStarted);
+      socket.off('transcription:completed', handleCompleted);
     };
   }, []);
 
@@ -109,7 +120,7 @@ const TranscriptionNotifications = () => {
     <div className="fixed top-4 right-4 z-50 w-80">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Header */}
-        <div 
+        <div
           className="px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-700 dark:to-cyan-700 text-white flex items-center justify-between cursor-pointer hover:from-blue-700 hover:to-cyan-700 transition-all"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
