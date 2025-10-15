@@ -12,8 +12,14 @@ class TranscriptionQueue {
 
   add(item: QueueItem) {
     this.queue.push(item);
-    console.log(`📋 Added to queue: ${item.videoId} (Queue size: ${this.queue.length})`);
-    this.processNext();
+    console.log(`📋 Added to queue: ${item.videoId} (Total in queue: ${this.queue.length})`);
+    
+    // Start processing if not already processing
+    if (!this.processing) {
+      this.processNext();
+    } else {
+      console.log(`⏳ Video queued, waiting for current transcription to finish...`);
+    }
   }
 
   private async processNext() {
