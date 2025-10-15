@@ -22,7 +22,16 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadVideos();
-  }, []);
+    
+    // Auto-refresh every 5 seconds if there are processing videos
+    const interval = setInterval(() => {
+      if (videos.some(v => v.status === 'processing')) {
+        loadVideos();
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [videos]);
 
   const loadVideos = async () => {
     try {

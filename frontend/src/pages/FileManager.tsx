@@ -44,7 +44,16 @@ const FileManager = () => {
 
   useEffect(() => {
     loadData();
-  }, [currentFolder]);
+    
+    // Auto-refresh every 5 seconds if there are processing videos
+    const interval = setInterval(() => {
+      if (videos.some(v => v.status === 'processing')) {
+        loadData();
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [currentFolder, videos]);
 
   const loadData = async () => {
     try {
@@ -185,14 +194,17 @@ const FileManager = () => {
           </div>
         </div>
 
-        {/* Breadcrumbs & Drop Zone for Root */}
+        {/* Breadcrumbs & Drop Zone */}
         {currentFolder && (
           <div className="mb-4 flex items-center gap-2">
             <button
-              onClick={() => setCurrentFolder(null)}
-              className="px-4 py-2 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+              onClick={() => {
+                const current = folders.find(f => f.id === currentFolder);
+                setCurrentFolder(current?.parent_folder_id || null);
+              }}
+              className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
             >
-              ← {t('common.back')} (Root)
+              ← {t('common.back')}
             </button>
             <div
               onDragOver={(e) => {
@@ -207,12 +219,19 @@ const FileManager = () => {
                 e.currentTarget.classList.remove('bg-primary-100', 'dark:bg-primary-900/30');
                 const videoId = e.dataTransfer.getData('videoId');
                 if (videoId) {
-                  moveVideoToRoot(videoId);
+                  const current = folders.find(f => f.id === currentFolder);
+                  const targetFolderId = current?.parent_folder_id || null;
+                  try {
+                    await api.put(`/api/videos/${videoId}`, { folder_id: targetFolderId });
+                    loadData();
+                  } catch (error) {
+                    console.error('Failed to move video:', error);
+                  }
                 }
               }}
               className="flex-1 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center text-sm text-gray-600 dark:text-gray-400 hover:border-primary-400 transition-colors"
             >
-              📂 Drop here to move to root folder
+              📤 Drop here to move to parent folder
             </div>
           </div>
         )}
@@ -294,8 +313,11 @@ const FileManager = () => {
                   }}
                   className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group"
                 >
-                  <div className="flex items-center flex-1">
-                    <Folder className="w-10 h-10 text-yellow-500 mr-4 flex-shrink-0" />
+                  <div className="flex items-center flex-1 min-w-0">
+                    <Folder 
+                      className="w-10 h-10 text-yellow-500 mr-4 flex-shrink-0 cursor-pointer"
+                      onClick={() => setCurrentFolder(folder.id)}
+                    />
                     <div className="flex-1 min-w-0">
                       {editingFolder === folder.id ? (
                         <input
@@ -314,15 +336,17 @@ const FileManager = () => {
                           }}
                           className="w-full px-2 py-1 border border-primary-500 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
                           autoFocus
+                          onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
-                        <button
+                        <div
                           onClick={() => setCurrentFolder(folder.id)}
-                          onDoubleClick={() => {
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
                             setEditingFolder(folder.id);
                             setEditFolderName(folder.name);
                           }}
-                          className="text-left w-full"
+                          className="text-left w-full cursor-pointer"
                         >
                           <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {folder.name}
@@ -331,9 +355,9 @@ const FileManager = () => {
                             {formatDistanceToNow(new Date(folder.created_at), {
                               addSuffix: true,
                               locale,
-                            })}
+                            })} • Double-click to rename
                           </p>
-                        </button>
+                        </div>
                       )}
                     </div>
                   </div>

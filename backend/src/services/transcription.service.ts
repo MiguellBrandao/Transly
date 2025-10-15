@@ -224,12 +224,16 @@ export const processVideoTranscription = async (
       .eq("id", videoId);
 
     // Get video directory
-    const STORAGE_TYPE = process.env.STORAGE_TYPE || 'local';
-    const VIDEOS_DIR = path.join(__dirname, '../../', process.env.VIDEOS_DIR || 'videos');
+    const STORAGE_TYPE = process.env.STORAGE_TYPE || "local";
+    const VIDEOS_DIR = path.join(
+      __dirname,
+      "../../",
+      process.env.VIDEOS_DIR || "videos"
+    );
     const videoDir = path.join(VIDEOS_DIR, userId, videoId);
-    
+
     // Extract audio to video directory
-    const audioPath = path.join(videoDir, 'audio.wav');
+    const audioPath = path.join(videoDir, "audio.wav");
 
     await extractAudio(videoPath, audioPath);
 

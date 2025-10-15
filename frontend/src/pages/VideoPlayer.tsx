@@ -59,7 +59,16 @@ const VideoPlayer = () => {
 
   useEffect(() => {
     loadData();
-  }, [id]);
+    
+    // Auto-refresh every 5 seconds if video is still processing
+    const interval = setInterval(() => {
+      if (video?.status === 'processing') {
+        loadData();
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [id, video?.status]);
 
   const loadData = async () => {
     try {
@@ -94,7 +103,7 @@ const VideoPlayer = () => {
     try {
       const { supabase } = await import('../config/supabase');
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.access_token) {
         console.error('No access token available');
         return;
