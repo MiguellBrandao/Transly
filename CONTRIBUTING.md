@@ -25,21 +25,25 @@ Obrigado por considerar contribuir para o Transly! 🎉
 
 1. **Fork o repositório**
 2. **Crie um branch** para sua feature
+
    ```bash
    git checkout -b feature/MinhaNovaFeature
    ```
 
 3. **Faça suas alterações**
+
    - Siga as convenções de código
    - Adicione testes se aplicável
    - Atualize a documentação
 
 4. **Commit suas mudanças**
+
    ```bash
    git commit -m "feat: adiciona nova funcionalidade X"
    ```
 
 5. **Push para o branch**
+
    ```bash
    git push origin feature/MinhaNovaFeature
    ```
@@ -71,6 +75,7 @@ Siga o padrão [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore:` - Atualização de dependências, configuração, etc.
 
 Exemplos:
+
 ```
 feat: adiciona suporte para legendas SRT
 fix: corrige erro ao exportar para DOCX
@@ -82,7 +87,7 @@ refactor: melhora performance do player de vídeo
 
 ```typescript
 // ✅ Bom
-import { useState } from 'react';
+import { useState } from "react";
 
 interface MyComponentProps {
   title: string;
@@ -91,7 +96,7 @@ interface MyComponentProps {
 
 const MyComponent = ({ title, onClose }: MyComponentProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <div>
       <h1>{title}</h1>
@@ -106,7 +111,7 @@ export default MyComponent;
 
 ```typescript
 // ✅ Bom
-router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const data = await fetchData(id);
@@ -120,6 +125,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 ## Estrutura de Pastas
 
 ### Frontend
+
 ```
 frontend/src/
 ├── components/     # Componentes reutilizáveis
@@ -132,6 +138,7 @@ frontend/src/
 ```
 
 ### Backend
+
 ```
 backend/src/
 ├── routes/         # Rotas da API
@@ -145,12 +152,14 @@ backend/src/
 ## Testes
 
 ### Frontend
+
 ```bash
 cd frontend
 npm test
 ```
 
 ### Backend
+
 ```bash
 cd backend
 npm test
@@ -165,6 +174,7 @@ Ao adicionar novo texto:
 3. Use `t('chave')` no componente
 
 Exemplo:
+
 ```typescript
 // pt.json
 {
@@ -219,4 +229,3 @@ Ao contribuir, você concorda que suas contribuições serão licenciadas sob a 
 ---
 
 Obrigado por contribuir! 🚀
-

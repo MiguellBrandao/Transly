@@ -15,16 +15,19 @@ Antes de começar, certifique-se de ter instalado:
 ### Instalar FFmpeg
 
 #### Windows
+
 1. Baixe o FFmpeg de [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
 2. Extraia o arquivo ZIP
 3. Adicione a pasta `bin` ao PATH do sistema
 
 #### macOS
+
 ```bash
 brew install ffmpeg
 ```
 
 #### Linux (Ubuntu/Debian)
+
 ```bash
 sudo apt update
 sudo apt install ffmpeg
@@ -59,11 +62,13 @@ npm install
 ### Configurar variáveis de ambiente
 
 1. Copie o arquivo de exemplo:
+
 ```bash
 cp .env.example .env
 ```
 
 2. Edite o arquivo `.env` com suas credenciais do Supabase:
+
 ```env
 PORT=3001
 NODE_ENV=development
@@ -100,11 +105,13 @@ npm install
 ### Configurar variáveis de ambiente
 
 1. Copie o arquivo de exemplo:
+
 ```bash
 cp .env.example .env
 ```
 
 2. Edite o arquivo `.env`:
+
 ```env
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_ANON_KEY=sua_chave_anon
@@ -168,25 +175,30 @@ transly/
 ## Resolução de Problemas
 
 ### Erro: FFmpeg não encontrado
+
 - Verifique se o FFmpeg está instalado e no PATH
 - Execute `ffmpeg -version` no terminal para confirmar
 
 ### Erro: Falha ao conectar ao Supabase
+
 - Verifique se as credenciais em `.env` estão corretas
 - Confirme que o projeto Supabase está ativo
 - Verifique a conexão com a internet
 
 ### Erro: Vídeo não carrega
+
 - Verifique se o bucket `videos` existe no Supabase Storage
 - Confirme que as políticas de storage estão configuradas
 - Verifique o console do navegador para erros CORS
 
 ### Transcrição não funciona
+
 - A primeira execução pode demorar (download do modelo Whisper)
 - Verifique os logs do backend para erros
 - Certifique-se de que há espaço em disco suficiente
 
 ### Erro de porta já em uso
+
 ```bash
 # Windows
 netstat -ano | findstr :3001
@@ -201,6 +213,7 @@ lsof -ti:3001 | xargs kill -9
 ### Adicionar novas traduções
 
 Edite os arquivos em `frontend/src/i18n/locales/`:
+
 - `pt.json` - Português
 - `en.json` - Inglês
 
@@ -213,6 +226,7 @@ Edite os arquivos em `frontend/src/i18n/locales/`:
 ### Alterar limites de upload
 
 Em `backend/src/routes/video.routes.ts`:
+
 ```typescript
 limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
 ```
@@ -229,6 +243,7 @@ limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
 ## Suporte
 
 Para problemas ou dúvidas:
+
 1. Verifique a seção de [Resolução de Problemas](#resolução-de-problemas)
 2. Consulte a documentação do [Supabase](https://supabase.com/docs)
 3. Abra uma issue no GitHub
@@ -236,4 +251,3 @@ Para problemas ou dúvidas:
 ## Licença
 
 MIT - Veja o arquivo LICENSE para detalhes
-

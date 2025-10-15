@@ -18,6 +18,7 @@
 5. Click **Run** to execute the schema
 
 This will create:
+
 - `folders` table
 - `videos` table
 - `transcriptions` table
@@ -44,28 +45,34 @@ After creating the bucket, set up RLS policies for storage:
 Create three policies:
 
 **Policy 1: Users can upload their own videos**
+
 - Policy name: `Users can upload videos`
 - Allowed operation: `INSERT`
 - Target roles: `authenticated`
 - Policy definition:
+
 ```sql
 bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text
 ```
 
 **Policy 2: Users can view their own videos**
+
 - Policy name: `Users can view videos`
 - Allowed operation: `SELECT`
 - Target roles: `authenticated`
 - Policy definition:
+
 ```sql
 bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text
 ```
 
 **Policy 3: Users can delete their own videos**
+
 - Policy name: `Users can delete videos`
 - Allowed operation: `DELETE`
 - Target roles: `authenticated`
 - Policy definition:
+
 ```sql
 bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text
 ```
@@ -123,7 +130,7 @@ VITE_API_URL=http://localhost:3001
 2. Configure file size limits and allowed MIME types
 3. For production, adjust the bucket settings:
    - Maximum file size: 500MB (or as needed)
-   - Allowed MIME types: video/*
+   - Allowed MIME types: video/\*
 
 ## Step 8: Test the Setup
 
@@ -136,16 +143,19 @@ VITE_API_URL=http://localhost:3001
 ## Troubleshooting
 
 ### Videos not uploading
+
 - Check if the `videos` bucket exists
 - Verify storage policies are correctly set
 - Check browser console for CORS errors
 
 ### Authentication issues
+
 - Verify API keys are correct
 - Check if email provider is enabled
 - Look at network tab for 401/403 errors
 
 ### Database errors
+
 - Ensure the schema was executed successfully
 - Check if RLS policies are enabled
 - Verify foreign key constraints
@@ -164,7 +174,7 @@ VITE_API_URL=http://localhost:3001
 ## Support
 
 For more information, visit:
+
 - [Supabase Documentation](https://supabase.com/docs)
 - [Supabase Storage Guide](https://supabase.com/docs/guides/storage)
 - [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)
-

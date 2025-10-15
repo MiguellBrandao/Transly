@@ -123,28 +123,33 @@ transly/
 ## Funcionalidades Principais
 
 ### 🎥 Player de Vídeo Avançado
+
 - Controlo de velocidade (0.1x até 16x)
 - Navegação por palavras (clique para saltar)
 - Palavra atual sublinhada durante reprodução
 - Interface moderna e responsiva
 
 ### 📝 Transcrição Inteligente
+
 - Palavras com timestamps precisos
 - Tooltips com informações detalhadas (início, fim, duração)
 - Busca que ignora acentos e maiúsculas
 - Agrupamento em frases
 
 ### 📤 Exportação Flexível
+
 - TXT - Texto simples
 - CSV - Tabela com timestamps
 - DOCX - Documento formatado
 
 ### 🌍 Multilíngue
+
 - Português (padrão)
 - Inglês
 - Fácil adicionar novos idiomas
 
 ### 🎨 Interface Moderna
+
 - Dark/Light mode
 - Design responsivo
 - Tailwind CSS
