@@ -67,8 +67,14 @@ const readAudioFile = (audioPath: string): Float32Array => {
 
   // Normalize to [-1, 1] range (critical for Whisper)
   const typedSamples = samples as Float32Array;
-  const maxVal = Math.max(...Array.from(typedSamples).map(Math.abs));
   
+  // Find max value without spread operator (avoid stack overflow)
+  let maxVal = 0;
+  for (let i = 0; i < typedSamples.length; i++) {
+    const absVal = Math.abs(typedSamples[i]);
+    if (absVal > maxVal) maxVal = absVal;
+  }
+
   if (maxVal > 1) {
     const normalized = new Float32Array(typedSamples.length);
     for (let i = 0; i < typedSamples.length; i++) {
@@ -85,8 +91,19 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
     console.log("📖 Reading audio file...");
     const audioData = readAudioFile(audioPath);
     const durationInSeconds = audioData.length / 16000;
-    console.log(`✅ Audio loaded: ${audioData.length} samples (${durationInSeconds.toFixed(1)}s duration)`);
-    console.log(`   Audio range: [${Math.min(...audioData).toFixed(3)}, ${Math.max(...audioData).toFixed(3)}]`);
+    console.log(
+      `✅ Audio loaded: ${
+        audioData.length
+      } samples (${durationInSeconds.toFixed(1)}s duration)`
+    );
+    
+    // Find min/max without spread operator
+    let min = audioData[0], max = audioData[0];
+    for (let i = 1; i < audioData.length; i++) {
+      if (audioData[i] < min) min = audioData[i];
+      if (audioData[i] > max) max = audioData[i];
+    }
+    console.log(`   Audio range: [${min.toFixed(3)}, ${max.toFixed(3)}]`);
 
     console.log("🎤 Starting Whisper transcription...");
     const model = await getTranscriber();
@@ -101,26 +118,28 @@ export const transcribeAudio = async (audioPath: string): Promise<any> => {
     });
 
     console.log("📝 Raw transcription result:");
-    console.log(`   Text: "${result.text || '(empty)'}"`);
+    console.log(`   Text: "${result.text || "(empty)"}"`);
     console.log(`   Chunks: ${result.chunks?.length || 0}`);
 
     // Check if we got valid results
     if (!result || !result.text || result.text.trim() === "") {
       console.warn("⚠️ Whisper returned empty - audio might have no speech");
       console.log("   Trying again without language constraint...");
-      
+
       // Try again without language constraint
       const result2 = await model(audioData, {
         return_timestamps: "word",
         chunk_length_s: 30,
         stride_length_s: 5,
       });
-      
+
       if (result2?.text && result2.text.trim() !== "") {
-        console.log(`✅ Success on retry: "${result2.text.substring(0, 50)}..."`);
+        console.log(
+          `✅ Success on retry: "${result2.text.substring(0, 50)}..."`
+        );
         return processTranscriptionResult(result2, audioData.length);
       }
-      
+
       console.warn("❌ Still empty. Using mock data for demonstration.");
       return getMockTranscription();
     }
@@ -138,7 +157,7 @@ const processTranscriptionResult = (result: any, audioLength: number) => {
 
   // Transform result to our format
   let words: any[] = [];
-  
+
   if (result.chunks && result.chunks.length > 0) {
     words = result.chunks
       .map((chunk: any) => ({
