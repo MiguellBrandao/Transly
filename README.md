@@ -7,6 +7,7 @@
 ## 🌟 Features
 
 - 🎥 **Video Upload & Management** - Drag & drop interface, supports MP4, AVI, MOV, WEBM, MKV (up to 500MB)
+- 🗜️ **Smart Video Compression** - Automatic client-side compression for large videos before upload (3GB → <100MB)
 - 🤖 **AI Transcription** - Automatic transcription using Whisper AI with word-level timestamps
 - 📝 **Advanced Video Player** - Synchronized transcription with playback speed control (0.25x-16x)
 - 🔍 **Smart Search** - Accent-insensitive, case-insensitive search across transcriptions
@@ -15,6 +16,8 @@
 - 🎨 **Dark/Light Mode** - Eye-friendly themes with smooth transitions
 - 📁 **Folder Organization** - Organize videos in hierarchical folders
 - 🔐 **Secure Authentication** - Email-based authentication via Supabase
+- 🔄 **Real-time Updates** - WebSocket-based live transcription status updates
+- ⚡ **Queue System** - Automatic video processing queue to prevent backend overload
 
 ## 🎯 Demo Features
 
@@ -31,6 +34,15 @@
 - Speed control from 0.25x to 16x
 - Precise seek bar
 - Play/pause with visual feedback
+
+### Smart Video Compression
+
+- **Automatic compression** for videos larger than 100MB (configurable)
+- **Client-side processing** using FFmpeg.wasm - compression happens in your browser
+- **Intelligent settings** based on video size
+- **Real-time progress** with detailed compression statistics
+- **No server load** - all compression is done before upload
+- **Example**: A 3GB video can be compressed to <100MB before upload, saving time and bandwidth
 
 ## 🚀 Quick Start
 
@@ -168,6 +180,13 @@ UPLOAD_DIR=uploads
 TEMP_DIR=temp
 VIDEOS_DIR=videos
 BASE_URL=http://localhost:3001
+
+# Whisper AI Model (tiny, base, small, or mock)
+# tiny = fastest, least accurate (recommended for testing)
+# base = balanced (recommended for production)
+# small = slower, more accurate
+# mock = fake data for testing without AI
+WHISPER_MODEL=tiny
 ```
 
 Start backend:
@@ -190,6 +209,12 @@ Edit `frontend/.env`:
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
 VITE_API_URL=http://localhost:3001
+
+# Video Compression (Optional)
+VITE_COMPRESSION_THRESHOLD_MB=100  # Compress videos larger than this
+VITE_VIDEO_RESOLUTION=640          # Target resolution (480, 640, 720, 1080)
+VITE_VIDEO_BITRATE=200k           # Video bitrate (150k, 200k, 300k)
+VITE_AUDIO_BITRATE=96k            # Audio bitrate (64k, 96k, 128k)
 ```
 
 Start frontend:
@@ -204,7 +229,12 @@ npm run dev
 
 1. **Register** a new account or **login**
 2. **Upload** a video file (MP4, AVI, MOV, WEBM, MKV)
-3. Wait for the **transcription** to process (first time takes longer as it downloads the Whisper model ~300MB)
+   - Large videos (>100MB) are automatically compressed in your browser before upload
+   - You'll see compression progress with file size reduction statistics
+3. Wait for the **transcription** to process
+   - First time takes longer as it downloads the Whisper model (~300MB)
+   - Videos are processed in a queue, one at a time
+   - You'll receive real-time updates when transcription completes
 4. **View** your video with synchronized transcription
 5. **Click words** to jump to that moment
 6. **Search** for specific words or phrases
@@ -222,6 +252,8 @@ npm run dev
 - i18next (internationalization)
 - Lucide Icons
 - React Player
+- FFmpeg.wasm (client-side video compression)
+- Socket.io-client (real-time updates)
 
 ### Backend
 
@@ -229,8 +261,10 @@ npm run dev
 - Express
 - TypeScript
 - @xenova/transformers (Whisper AI)
-- FFmpeg
+- FFmpeg (audio extraction)
 - Multer (file uploads)
+- Socket.io (WebSocket real-time updates)
+- Worker Threads (non-blocking transcription)
 
 ### Database & Storage
 
@@ -335,7 +369,23 @@ sudo apt install ffmpeg
 
 - First run downloads the Whisper model (~300MB)
 - Use shorter videos for testing (1-2 minutes)
+- Change `WHISPER_MODEL` to `tiny` in backend `.env` for faster (but less accurate) transcription
+- For production, use `base` model for balanced speed/accuracy
 - Consider using OpenAI's Whisper API for faster results
+
+### Large video uploads are slow
+
+- Videos larger than 100MB are automatically compressed in the browser before upload
+- Adjust `VITE_COMPRESSION_THRESHOLD_MB` in frontend `.env` to change the threshold
+- You can modify compression quality settings (`VITE_VIDEO_RESOLUTION`, `VITE_VIDEO_BITRATE`) for smaller files
+- The compression happens client-side using FFmpeg.wasm (no server load)
+
+### Backend becomes unresponsive during transcription
+
+- This should not happen as transcription runs in Worker Threads
+- If it does, check that `tsx` is properly installed: `npm install -g tsx`
+- Verify `WHISPER_MODEL` is set to `tiny` or `base` (avoid `small` on low-end hardware)
+- Videos are processed in a queue to prevent overload
 
 ### Video not playing
 
